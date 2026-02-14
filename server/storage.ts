@@ -1,38 +1,165 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { 
+  User, InsertUser, TutorProfile, InsertTutorProfile, Job, InsertJob, 
+  Application, Book, InsertBook, Review, InsertReview,
+  users, tutorProfiles, jobs, applications, books, reviews
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, ilike, and, desc } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
+  // Users
+  getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+
+  // Tutors
+  createTutorProfile(profile: InsertTutorProfile): Promise<TutorProfile>;
+  getTutorProfile(userId: number): Promise<TutorProfile | undefined>;
+  getTutors(filters?: { subject?: string, location?: string, mode?: string }): Promise<(User & { tutorProfile: TutorProfile })[]>;
+
+  // Jobs
+  createJob(job: InsertJob): Promise<Job>;
+  getJobs(query?: string): Promise<(Job & { institution: User })[]>;
+  createApplication(app: any): Promise<Application>; // Type 'any' for simplicity in interface, implement properly
+
+  // Books
+  createBook(book: InsertBook): Promise<Book>;
+  getBooks(filters?: { subject?: string, classLevel?: string }): Promise<(Book & { seller: User })[]>;
+
+  // Reviews
+  createReview(review: InsertReview): Promise<Review>;
+  getReviewsForTutor(tutorId: number): Promise<Review[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
-  }
-
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+export class DatabaseStorage implements IStorage {
+  // Users
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  // Tutors
+  async createTutorProfile(profile: InsertTutorProfile): Promise<TutorProfile> {
+    const [newProfile] = await db.insert(tutorProfiles).values(profile).returning();
+    return newProfile;
+  }
+
+  async getTutorProfile(userId: number): Promise<TutorProfile | undefined> {
+    const [profile] = await db.select().from(tutorProfiles).where(eq(tutorProfiles.userId, userId));
+    return profile;
+  }
+
+  async getTutors(filters?: { subject?: string, location?: string, mode?: string }): Promise<(User & { tutorProfile: TutorProfile })[]> {
+    const conditions = [];
+    if (filters?.location) conditions.push(ilike(users.location, `%${filters.location}%`));
+    
+    // Join users and tutor profiles
+    const results = await db.select()
+      .from(users)
+      .innerJoin(tutorProfiles, eq(users.id, tutorProfiles.userId))
+      .where(and(...conditions));
+
+    // Filter by subject/mode in JS for MVP simplicity with JSON arrays
+    let filtered = results.map(r => ({ ...r.users, tutorProfile: r.tutor_profiles }));
+    
+    if (filters?.subject) {
+      filtered = filtered.filter(u => 
+        u.tutorProfile.subjects?.some(s => s.toLowerCase().includes(filters.subject!.toLowerCase()))
+      );
+    }
+    if (filters?.mode) {
+      filtered = filtered.filter(u => u.tutorProfile.mode === filters.mode);
+    }
+    
+    return filtered;
+  }
+
+  // Jobs
+  async createJob(job: InsertJob): Promise<Job> {
+    const [newJob] = await db.insert(jobs).values(job).returning();
+    return newJob;
+  }
+
+  async getJobs(query?: string): Promise<(Job & { institution: User })[]> {
+    let baseQuery = db.select({
+      job: jobs,
+      institution: users,
+    })
+    .from(jobs)
+    .innerJoin(users, eq(jobs.institutionId, users.id))
+    .where(eq(jobs.status, "open"))
+    .orderBy(desc(jobs.createdAt));
+
+    if (query) {
+       // Simple search
+       // baseQuery.where(ilike(jobs.title, `%${query}%`)); 
+       // Drizzle query builder complexity for conditional where, doing simple return for MVP
+    }
+
+    const results = await baseQuery;
+    
+    if (query) {
+      const q = query.toLowerCase();
+      return results
+        .filter(r => r.job.title.toLowerCase().includes(q) || r.job.subject?.toLowerCase().includes(q))
+        .map(r => ({ ...r.job, institution: r.institution }));
+    }
+
+    return results.map(r => ({ ...r.job, institution: r.institution }));
+  }
+
+  async createApplication(app: any): Promise<Application> {
+    const [application] = await db.insert(applications).values(app).returning();
+    return application;
+  }
+
+  // Books
+  async createBook(book: InsertBook): Promise<Book> {
+    const [newBook] = await db.insert(books).values(book).returning();
+    return newBook;
+  }
+
+  async getBooks(filters?: { subject?: string, classLevel?: string }): Promise<(Book & { seller: User })[]> {
+    const results = await db.select({
+      book: books,
+      seller: users
+    })
+    .from(books)
+    .innerJoin(users, eq(books.sellerId, users.id))
+    .where(eq(books.sold, false))
+    .orderBy(desc(books.createdAt));
+
+    let mapped = results.map(r => ({ ...r.book, seller: r.seller }));
+
+    if (filters?.subject) {
+      mapped = mapped.filter(b => b.subject?.toLowerCase().includes(filters.subject!.toLowerCase()));
+    }
+    if (filters?.classLevel) {
+      mapped = mapped.filter(b => b.classLevel === filters.classLevel);
+    }
+
+    return mapped;
+  }
+
+  // Reviews
+  async createReview(review: InsertReview): Promise<Review> {
+    const [newReview] = await db.insert(reviews).values(review).returning();
+    return newReview;
+  }
+
+  async getReviewsForTutor(tutorId: number): Promise<Review[]> {
+    return await db.select().from(reviews).where(eq(reviews.tutorId, tutorId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
