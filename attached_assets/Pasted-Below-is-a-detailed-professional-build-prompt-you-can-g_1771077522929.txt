@@ -1,0 +1,340 @@
+Below is a **detailed professional build prompt** you can give to your team or use with an AI builder.
+
+---
+
+# Project Build Prompt — EduLocal
+
+## Project Overview
+
+Build a **modern, professional, and scalable full-stack web platform** called **EduLocal**.
+
+EduLocal is a **location-based education marketplace** that connects:
+
+* Students with nearby tutors
+* Institutions with teachers (job vacancies)
+* Students with sellers for used academic books
+
+The platform must be **clean, minimal, responsive, and production-ready in design quality**.
+
+---
+
+# 1. Design & UI Requirements
+
+### Design Style
+
+* Modern SaaS look
+* Clean typography
+* Soft shadows, rounded cards
+* Neutral base colors with one strong primary accent
+* Smooth hover animations
+* Fully responsive (mobile-first)
+
+### Pages Required
+
+1. Landing Page
+2. Authentication Pages (Login / Register)
+3. Role Selection Page
+4. Student Dashboard
+5. Teacher Dashboard
+6. Institution Dashboard
+7. Seller Dashboard
+8. Tutor Search Page
+9. Tutor Profile Page
+10. Job Board Page
+11. Book Marketplace Page
+12. Admin Panel (Basic moderation)
+
+---
+
+# 2. User Roles & Permissions
+
+## Roles:
+
+* Student
+* Teacher
+* Institution
+* Seller
+* Admin
+
+Implement **role-based access control (RBAC)**.
+
+Each role should have:
+
+* Separate dashboard
+* Restricted routes
+* Personalized navigation
+
+---
+
+# 3. Core Features (Must Implement)
+
+## A. Smart Tutor Matching (Main Feature)
+
+Students can:
+
+* Enter subject
+* Select class/grade
+* Enter budget range
+* Enter location
+* Choose preferred teaching mode (home / online)
+
+System should:
+
+* Filter tutors by matching criteria
+* Rank tutors based on:
+
+  * Rating
+  * Experience
+  * Distance (if location available)
+* Display in clean card layout
+
+---
+
+## B. Tutor Profile
+
+Each tutor profile must include:
+
+* Name
+* Photo
+* Subjects taught
+* Classes covered
+* Years of experience
+* Hourly fee
+* Location
+* Rating & reviews
+* Demo class request button
+* Contact request system (no direct number display)
+
+---
+
+## C. Review & Rating System
+
+Students can:
+
+* Leave rating (1–5)
+* Write review after interaction
+
+System calculates:
+
+* Average rating
+* Total reviews
+
+---
+
+## D. Institution Job Board
+
+Institutions can:
+
+* Post job vacancy
+
+  * Subject
+  * Required qualification
+  * Salary range
+  * Location
+  * Experience required
+
+Teachers can:
+
+* Browse jobs
+* Apply to jobs
+* Track application status
+
+---
+
+## E. Used Book Marketplace
+
+Sellers can:
+
+* List book
+
+  * Title
+  * Subject
+  * Class
+  * Condition
+  * Price
+  * Location
+  * Upload image
+
+Students can:
+
+* Filter by subject/class
+* View seller profile
+* Send purchase inquiry
+
+---
+
+## F. Location-Based Filtering
+
+* Store city and area
+* Allow radius filtering (basic logic using stored coordinates or area match)
+* Prioritize nearby results
+
+---
+
+## G. Authentication System
+
+* JWT authentication
+* Secure password hashing
+* Protected routes
+* Role-based middleware
+* Refresh token system (optional if time allows)
+
+---
+
+# 4. Tech Stack
+
+Frontend:
+
+* React (TypeScript)
+* TailwindCSS
+* Modern component architecture
+* Context API or Zustand for state management
+
+Backend:
+
+* Express (TypeScript)
+* MVC architecture
+* Controllers / Routes / Models separation
+* MongoDB with Mongoose
+
+Security:
+
+* JWT authentication
+* Password hashing (bcrypt)
+* Input validation
+* Rate limiting (basic)
+
+---
+
+# 5. Database Design (MongoDB)
+
+Collections:
+
+Users
+
+* name
+* email
+* password
+* role
+* location
+* createdAt
+
+TutorProfile
+
+* userId
+* subjects
+* classes
+* experience
+* hourlyRate
+* mode
+* rating
+
+Reviews
+
+* tutorId
+* studentId
+* rating
+* comment
+
+Jobs
+
+* institutionId
+* subject
+* salaryRange
+* qualification
+* experience
+* location
+
+Applications
+
+* jobId
+* teacherId
+* status
+
+Books
+
+* sellerId
+* title
+* subject
+* class
+* price
+* condition
+* location
+
+---
+
+# 6. UI/UX Expectations
+
+Landing page must include:
+
+* Hero section
+* Feature highlights
+* How it works (3 steps)
+* Call to action buttons
+* Clean footer
+
+Dashboards must include:
+
+* Sidebar navigation
+* Analytics cards (basic counts)
+* Recent activity section
+
+Search pages must include:
+
+* Filter sidebar
+* Sorting options
+* Pagination
+
+---
+
+# 7. Admin Panel (Basic)
+
+Admin can:
+
+* View all users
+* Remove fake accounts
+* Delete inappropriate listings
+* View reports
+
+---
+
+# 8. Performance & Quality
+
+* Proper error handling
+* Loading states
+* Clean API structure
+* No console errors
+* Optimized queries
+* Responsive design on all screen sizes
+
+---
+
+# 9. Hackathon Strategy
+
+Priority Order:
+
+1. Authentication + Roles
+2. Tutor matching system
+3. Tutor profile + reviews
+4. Job board
+5. Book marketplace
+6. Admin panel (if time allows)
+
+---
+
+# 10. End Goal
+
+The final product should feel like:
+
+* A real startup MVP
+* Professional SaaS product
+* Clean UI similar to modern marketplace platforms
+* Functional and demo-ready for judges
+
+---
+
+If you want, I can now:
+
+* Break this into task distribution for 3–4 team members
+* Or create a technical architecture diagram explanation
+* Or create a 90-second pitch script for presentation
