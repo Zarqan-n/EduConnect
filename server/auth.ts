@@ -37,12 +37,15 @@ export async function setupAuth(app: Express) {
   };
 
   if (app.get("env") === "production") {
-    app.set("trust proxy", 1); // trust first proxy
+    app.set("trust proxy", 1);
+
     sessionSettings.cookie = {
-      secure: true, 
-      ...sessionSettings.cookie
-    }
+      ...sessionSettings.cookie,
+      secure: true,
+      sameSite: "none",
+    };
   }
+
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());

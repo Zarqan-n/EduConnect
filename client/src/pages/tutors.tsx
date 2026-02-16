@@ -81,7 +81,7 @@ function TutorCard({ user }: { user: any }) {
   const profile = user.tutorProfile;
 
   return (
-    <Card className="hover-lift border-border/60 overflow-hidden flex flex-col h-full card-tutor border-l-4 border-l-blue-400 hover:border-l-blue-600 transition-colors">
+    <Card className="hover-lift border-border/99 overflow-hidden flex flex-col h-full card-tutor border-l-4 border-l-blue-400 hover:border-l-blue-600 transition-colors">
       <CardHeader className="p-6 pb-0 bg-gradient-to-br from-blue-50/50 to-transparent">
         <div className="flex justify-between items-start">
           <div className="flex gap-4">
