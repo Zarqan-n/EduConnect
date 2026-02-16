@@ -20,7 +20,7 @@ export async function setupAuth(app: Express) {
     // test DB connectivity
     const client = await pool.connect();
     client.release();
-    store = new PostgresqlStore({ pool, createTableIfMissing: true });
+    store = new PostgresqlStore({ pool });
   } catch (err: any) {
     console.warn("Postgres session store not available, falling back to MemoryStore", err?.message || err);
     store = new session.MemoryStore();
