@@ -10,5 +10,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Configure SSL for production databases (Render Postgres requires SSL)
+const sslOption: any = process.env.PGSSLMODE
+  ? { rejectUnauthorized: process.env.PGSSLMODE === 'disable' ? false : true }
+  : process.env.NODE_ENV === 'production'
+  ? { rejectUnauthorized: false }
+  : false;
+
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: sslOption });
 export const db = drizzle(pool, { schema });
