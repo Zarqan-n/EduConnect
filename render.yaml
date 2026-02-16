@@ -3,7 +3,7 @@ services:
     name: educonnect
     env: node
     plan: free
-    buildCommand: npm ci && ./node_modules/.bin/tsx script/build.ts
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
