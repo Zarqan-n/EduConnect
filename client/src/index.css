@@ -4,6 +4,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Smooth animations across all elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
 :root {
   --font-sans: 'Plus Jakarta Sans', sans-serif;
   --font-heading: 'Outfit', sans-serif;
@@ -100,10 +112,213 @@
   .animate-enter {
     animation: enter 0.5s ease-out forwards;
   }
-  
+
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
   }
+
+  /* Professional Gradient Backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary/10 via-primary/5 to-transparent;
+  }
+
+  .gradient-accent {
+    @apply bg-gradient-to-br from-accent/15 via-accent/5 to-transparent;
+  }
+
+  .gradient-mixed {
+    @apply bg-gradient-to-br from-primary/8 via-accent/8 to-secondary/8;
+  }
+
+  .gradient-hero {
+    @apply bg-gradient-to-br from-primary/15 via-primary/10 to-accent/5;
+  }
+
+  /* Section Backgrounds */
+  .section-tutors {
+    @apply bg-gradient-to-br from-blue-50 via-blue-50/50 to-indigo-50/30;
+  }
+
+  .section-books {
+    @apply bg-gradient-to-br from-green-50 via-emerald-50/50 to-teal-50/30;
+  }
+
+  .section-jobs {
+    @apply bg-gradient-to-br from-orange-50 via-amber-50/50 to-yellow-50/30;
+  }
+
+  .section-tutoring {
+    @apply bg-gradient-to-br from-purple-50 via-violet-50/50 to-purple-50/30;
+  }
+
+  /* Card Backgrounds with Gradient Accents */
+  .card-tutor {
+    @apply bg-gradient-to-br from-blue-50/40 to-indigo-50/20;
+  }
+
+  .card-book {
+    @apply bg-gradient-to-br from-green-50/40 to-emerald-50/20;
+  }
+
+  .card-job {
+    @apply bg-gradient-to-br from-orange-50/40 to-amber-50/20;
+  }
+
+  /* Badge Colors */
+  .badge-tutor {
+    @apply bg-blue-100 text-blue-800 border-blue-200;
+  }
+
+  .badge-book {
+    @apply bg-green-100 text-green-800 border-green-200;
+  }
+
+  .badge-job {
+    @apply bg-orange-100 text-orange-800 border-orange-200;
+  }
+
+  /* Header Gradients */
+  .header-gradient-text {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+  }
+
+  /* Professional Icon Backgrounds */
+  .icon-bg-primary {
+    @apply bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl p-4;
+  }
+
+  .icon-bg-accent {
+    @apply bg-gradient-to-br from-accent/20 to-accent/10 rounded-2xl p-4;
+  }
+
+  .icon-bg-blue {
+    @apply bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl p-4;
+  }
+
+  .icon-bg-green {
+    @apply bg-gradient-to-br from-green-100 to-green-50 rounded-2xl p-4;
+  }
+
+  .icon-bg-orange {
+    @apply bg-gradient-to-br from-orange-100 to-orange-50 rounded-2xl p-4;
+  }
+
+  /* Colored Borders */
+  .border-accent-soft {
+    @apply border-2 border-accent/40;
+  }
+
+  .border-primary-soft {
+    @apply border-2 border-primary/40;
+  }
+
+  /* Colored Text Shadows */
+  .text-glow-primary {
+    @apply text-primary drop-shadow-lg;
+  }
+
+  .text-glow-accent {
+    @apply text-accent drop-shadow-lg;
+  }
+
+  /* Professional Card Styling */
+  .card-colored {
+    @apply border-l-4 border-primary;
+  }
+
+  .card-colored-accent {
+    @apply border-l-4 border-accent;
+  }
+
+  .card-hover-colored {
+    @apply transition-all duration-300 hover:border-l-accent hover:shadow-xl hover:shadow-accent/20;
+  }
+
+  /* Subtle Background Patterns */
+  .pattern-dots {
+    background-image: radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 0 0;
+    opacity: 0.03;
+  }
+
+  .pattern-grid {
+    background-image: linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.02;
+  }
+
+  /* Professional button animations */
+  .btn-hover {
+    @apply transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/50;
+  }
+
+  /* Smooth scale on hover */
+  .scale-hover {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  /* Glow effect on focus */
+  .focus-glow {
+    @apply transition-all duration-300 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none;
+  }
+
+  /* Smooth opacity transitions */
+  .fade-transition {
+    @apply transition-opacity duration-300;
+  }
+
+  /* Smooth color transitions */
+  .color-transition {
+    @apply transition-colors duration-300;
+  }
+
+  /* Professional gradient animations */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 4s ease infinite;
+  }
+
+  /* Loading spinner - smooth rotation */
+  .spin-smooth {
+    @apply animate-spin;
+    animation-timing-function: linear;
+  }
+
+  /* Subtle background pulse */
+  .bg-pulse {
+    @apply animate-pulse;
+    animation-duration: 3s;
+  }
+
+  /* Text shimmer effect */
+  .shimmer-text {
+    background: linear-gradient(90deg, currentColor 0%, currentColor 100%);
+    background-size: 200% auto;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Page transition smooth enter */
+  .page-enter {
+    @apply animate-fade-in;
+  }
+
+  /* Staggered animation for lists */
+  .stagger-item {
+    animation: slide-in-from-bottom 0.4s ease-out;
+  }
+
+  .stagger-item:nth-child(1) { animation-delay: 0s; }
+  .stagger-item:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-item:nth-child(3) { animation-delay: 0.2s; }
+  .stagger-item:nth-child(4) { animation-delay: 0.3s; }
+  .stagger-item:nth-child(5) { animation-delay: 0.4s; }
+  .stagger-item:nth-child(n+6) { animation-delay: 0.5s; }
 }
 
 @keyframes enter {
@@ -114,5 +329,14 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
 }

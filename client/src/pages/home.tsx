@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, GraduationCap, Briefcase, BookOpen, Search } from "lucide-react";
 import { LayoutShell } from "@/components/layout-shell";
+import { StudentDashboard } from "@/components/student-dashboard";
 
 export default function Home() {
   const container = {
@@ -72,7 +73,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Features Section */}
+          {/* Features Section */}
       <div className="py-24 grid grid-cols-1 md:grid-cols-3 gap-8">
         <FeatureCard
           href="/tutors"
@@ -98,6 +99,11 @@ export default function Home() {
           color="text-green-600"
           bg="bg-green-100 dark:bg-green-900/20"
         />
+      </div>
+
+      {/* Map Preview / Quick Search */}
+      <div className="py-12">
+        <StudentDashboard title="Explore Nearby Tutors" description="Quickly find tutors, book sellers and institutions near you from the home page" />
       </div>
     </LayoutShell>
   );

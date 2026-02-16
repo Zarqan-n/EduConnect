@@ -48,10 +48,10 @@ export function Login() {
   return (
     <LayoutShell>
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="w-full max-w-md shadow-2xl border-border/60 bg-card/50 backdrop-blur-sm">
+        <Card className="w-full max-w-md shadow-2xl border-border/60 bg-card/50 backdrop-blur-sm card-hover animate-scale-in">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl font-bold text-center animate-slide-in-from-top">Welcome back</CardTitle>
+            <CardDescription className="text-center animate-slide-in-from-top" style={{animationDelay: '0.1s'}}>
               Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
@@ -62,10 +62,10 @@ export function Login() {
                   control={form.control}
                   name="username"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="animate-slide-in-from-left" style={{animationDelay: '0.2s'}}>
                       <FormLabel>Username</FormLabel>
                       <FormControl>
-                        <Input placeholder="johndoe" {...field} className="h-11 rounded-xl" />
+                        <Input placeholder="johndoe" {...field} className="h-11 rounded-xl focus-glow" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -75,10 +75,10 @@ export function Login() {
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="animate-slide-in-from-left" style={{animationDelay: '0.3s'}}>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="h-11 rounded-xl" />
+                        <Input type="password" placeholder="••••••••" {...field} className="h-11 rounded-xl focus-glow" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -86,10 +86,10 @@ export function Login() {
                 />
                 <Button 
                   type="submit" 
-                  className="w-full h-11 rounded-xl font-semibold" 
+                  className="w-full h-11 rounded-xl font-semibold btn-hover animate-slide-in-from-bottom" 
                   disabled={login.isPending}
                 >
-                  {login.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {login.isPending && <Loader2 className="mr-2 h-4 w-4 spin-smooth" />}
                   Sign In
                 </Button>
               </form>
@@ -129,17 +129,17 @@ export function Register() {
   return (
     <LayoutShell>
       <div className="flex items-center justify-center min-h-[60vh] py-10">
-        <Card className="w-full max-w-lg shadow-2xl border-border/60 bg-card/50 backdrop-blur-sm">
+        <Card className="w-full max-w-lg shadow-2xl border-border/60 bg-card/50 backdrop-blur-sm card-hover animate-scale-in">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl font-bold text-center animate-slide-in-from-top">Create an account</CardTitle>
+            <CardDescription className="text-center animate-slide-in-from-top" style={{animationDelay: '0.1s'}}>
               Join the educational community today
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 stagger-item">
                   <FormField
                     control={form.control}
                     name="name"
@@ -147,7 +147,7 @@ export function Register() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} className="rounded-xl" />
+                          <Input placeholder="John Doe" {...field} className="rounded-xl focus-glow" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -160,7 +160,7 @@ export function Register() {
                       <FormItem>
                         <FormLabel>Username</FormLabel>
                         <FormControl>
-                          <Input placeholder="johndoe" {...field} className="rounded-xl" />
+                          <Input placeholder="johndoe" {...field} className="rounded-xl focus-glow" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -172,10 +172,10 @@ export function Register() {
                   control={form.control}
                   name="email"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="stagger-item">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="john@example.com" {...field} className="rounded-xl" />
+                        <Input type="email" placeholder="john@example.com" {...field} className="rounded-xl focus-glow" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -186,17 +186,17 @@ export function Register() {
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="stagger-item">
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} className="rounded-xl" />
+                        <Input type="password" placeholder="••••••••" {...field} className="rounded-xl focus-glow" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 stagger-item">
                   <FormField
                     control={form.control}
                     name="role"
@@ -205,7 +205,7 @@ export function Register() {
                         <FormLabel>I am a...</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="rounded-xl">
+                            <SelectTrigger className="rounded-xl focus-glow">
                               <SelectValue placeholder="Select a role" />
                             </SelectTrigger>
                           </FormControl>
@@ -213,7 +213,6 @@ export function Register() {
                             <SelectItem value="student">Student</SelectItem>
                             <SelectItem value="teacher">Teacher</SelectItem>
                             <SelectItem value="institution">Institution</SelectItem>
-                            <SelectItem value="seller">Book Seller</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -227,7 +226,7 @@ export function Register() {
                       <FormItem>
                         <FormLabel>Location</FormLabel>
                         <FormControl>
-                          <Input placeholder="New York, NY" {...field} className="rounded-xl" />
+                          <Input placeholder="New York, NY" {...field} className="rounded-xl focus-glow" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -239,10 +238,10 @@ export function Register() {
                   control={form.control}
                   name="bio"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="stagger-item">
                       <FormLabel>Bio (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Tell us a bit about yourself..." {...field} className="rounded-xl" />
+                        <Input placeholder="Tell us a bit about yourself..." {...field} className="rounded-xl focus-glow" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -251,10 +250,10 @@ export function Register() {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-11 rounded-xl font-semibold mt-4" 
+                  className="w-full h-11 rounded-xl font-semibold mt-4 btn-hover animate-slide-in-from-bottom" 
                   disabled={register.isPending}
                 >
-                  {register.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {register.isPending && <Loader2 className="mr-2 h-4 w-4 spin-smooth" />}
                   Create Account
                 </Button>
               </form>

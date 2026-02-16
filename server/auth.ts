@@ -12,12 +12,22 @@ import { pool } from "./db";
 const scryptAsync = promisify(scrypt);
 const PostgresqlStore = connectPg(session);
 
-export function setupAuth(app: Express) {
+export async function setupAuth(app: Express) {
+  // Determine session store: prefer Postgres-backed store if DB reachable,
+  // otherwise fall back to the in-memory session store for development.
+  let store: session.Store;
+  try {
+    // test DB connectivity
+    const client = await pool.connect();
+    client.release();
+    store = new PostgresqlStore({ pool, createTableIfMissing: true });
+  } catch (err: any) {
+    console.warn("Postgres session store not available, falling back to MemoryStore", err?.message || err);
+    store = new session.MemoryStore();
+  }
+
   const sessionSettings: session.SessionOptions = {
-    store: new PostgresqlStore({
-      pool,
-      createTableIfMissing: true,
-    }),
+    store,
     secret: process.env.SESSION_SECRET || "super secret session key",
     resave: false,
     saveUninitialized: false,

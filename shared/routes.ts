@@ -2,7 +2,9 @@ import { z } from 'zod';
 import { 
   insertUserSchema, insertTutorProfileSchema, insertJobSchema, 
   insertApplicationSchema, insertBookSchema, insertReviewSchema,
-  users, tutorProfiles, jobs, applications, books, reviews 
+  users, tutorProfiles, jobs, applications, books, reviews,
+  type InsertUser, type InsertTutorProfile, type InsertJob, type InsertBook, type InsertReview,
+  type User, type TutorProfile, type Job, type Application, type Book, type Review
 } from './schema';
 
 export const errorSchemas = {
@@ -155,3 +157,6 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
   }
   return url;
 }
+
+// Re-export types for use in client code
+export type { InsertUser, InsertTutorProfile, InsertJob, InsertBook, InsertReview, User, TutorProfile, Job, Application, Book, Review };

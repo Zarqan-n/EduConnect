@@ -11,6 +11,8 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  getUsersByRole(role: string, location?: string): Promise<User[]>;
 
   // Tutors
   createTutorProfile(profile: InsertTutorProfile): Promise<TutorProfile>;
@@ -43,8 +45,20 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUsersByRole(role: string, location?: string): Promise<User[]> {
+    const conditions: any[] = [eq(users.role, role as any)];
+    if (location) conditions.push(ilike(users.location, `%${location}%`));
+    const results = await db.select().from(users).where(and(...conditions));
+    return results;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
     return user;
   }
 
@@ -162,4 +176,118 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// In-memory fallback storage for development when Postgres isn't available
+class MemoryStorage implements IStorage {
+  private users: User[] = [];
+  private tutors: TutorProfile[] = [];
+  private jobs: Job[] = [];
+  private applications: Application[] = [];
+  private booksArr: Book[] = [];
+  private idCounter = 1;
+
+  // Users
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.find(u => u.id === id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this.users.find(u => u.username === username);
+  }
+
+  async getUsersByRole(role: string, location?: string): Promise<User[]> {
+    return this.users.filter(u => u.role === role && (!location || (u.location && u.location.includes(location))));
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const user: any = { ...insertUser, id: this.idCounter++, createdAt: new Date() };
+    this.users.push(user);
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const userIndex = this.users.findIndex(u => u.id === id);
+    if (userIndex === -1) return undefined;
+    
+    const updatedUser = { ...this.users[userIndex], ...updates };
+    this.users[userIndex] = updatedUser;
+    return updatedUser;
+  }
+
+  // Tutors
+  async createTutorProfile(profile: InsertTutorProfile): Promise<TutorProfile> {
+    const p: any = { ...profile, id: this.idCounter++ };
+    this.tutors.push(p);
+    return p;
+  }
+
+  async getTutorProfile(userId: number): Promise<TutorProfile | undefined> {
+    return this.tutors.find(t => t.userId === userId);
+  }
+
+  async getTutors(filters?: { subject?: string, location?: string, mode?: string }): Promise<(User & { tutorProfile: TutorProfile })[]> {
+    return [];
+  }
+
+  // Jobs
+  async createJob(job: InsertJob): Promise<Job> {
+    const j: any = { ...job, id: this.idCounter++, createdAt: new Date() };
+    this.jobs.push(j);
+    return j;
+  }
+
+  async getJobs(query?: string): Promise<(Job & { institution: User })[]> {
+    return [];
+  }
+
+  async createApplication(app: any): Promise<Application> {
+    const a: any = { ...app, id: this.idCounter++ };
+    this.applications.push(a);
+    return a;
+  }
+
+  // Books
+  async createBook(book: InsertBook): Promise<Book> {
+    const b: any = { ...book, id: this.idCounter++, createdAt: new Date(), sold: false };
+    this.booksArr.push(b);
+    return b;
+  }
+
+  async getBooks(filters?: { subject?: string, classLevel?: string }): Promise<(Book & { seller: User })[]> {
+    return [];
+  }
+
+  // Reviews
+  async createReview(review: InsertReview): Promise<Review> {
+    const r: any = { ...review, id: this.idCounter++ };
+    return r;
+  }
+
+  async getReviewsForTutor(tutorId: number): Promise<Review[]> {
+    return [];
+  }
+}
+
+// Export a proxy storage that delegates to DatabaseStorage but falls back to MemoryStorage
+let storageDelegate: IStorage = new DatabaseStorage();
+
+export const storage: IStorage = new Proxy({}, {
+  get(_, prop: string) {
+    // Return a function that wraps delegate calls and falls back on DB errors
+    const val: any = (storageDelegate as any)[prop];
+    if (typeof val !== 'function') return val;
+    return async (...args: any[]) => {
+      try {
+        return await val.apply(storageDelegate, args);
+      } catch (err: any) {
+        // If DB is unreachable, swap to memory storage and retry
+        if (err?.code === 'ECONNREFUSED' || (err?.message && err.message.includes('ECONNREFUSED'))) {
+          const mem = new MemoryStorage();
+          storageDelegate = mem;
+          const retryVal: any = (storageDelegate as any)[prop];
+          if (typeof retryVal === 'function') return await retryVal.apply(storageDelegate, args);
+        }
+        throw err;
+      }
+    };
+  }
+}) as IStorage;

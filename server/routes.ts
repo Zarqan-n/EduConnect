@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
+import passport from "passport";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { insertTutorProfileSchema, insertJobSchema, insertBookSchema } from "@shared/schema";
@@ -10,14 +11,14 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  setupAuth(app);
+  await setupAuth(app);
 
   // Auth Routes
   app.post(api.auth.register.path, async (req, res, next) => {
     try {
       const existing = await storage.getUserByUsername(req.body.username);
       if (existing) {
-        return res.status(400).send("Username already exists");
+        return res.status(400).json({ message: "Username already exists", field: "username" });
       }
       
       const password = await hashPassword(req.body.password);
@@ -37,10 +38,9 @@ export async function registerRoutes(
 
   app.post(api.auth.login.path, (req, res, next) => {
     // Basic Passport Local Login
-    const passport = require("passport");
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) return next(err);
-      if (!user) return res.status(401).send(info?.message || "Login failed");
+      if (!user) return res.status(401).json({ message: info?.message || "Login failed" });
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(200).json(user);
@@ -58,6 +58,32 @@ export async function registerRoutes(
   app.get(api.auth.me.path, (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  // Update User Profile Settings
+  app.put("/api/users/profile", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const userId = (req.user as any).id;
+    
+    try {
+      const { name, email, location, bio } = req.body;
+      const updatedUser = await storage.updateUser(userId, {
+        name: name || undefined,
+        email: email || undefined,
+        location: location || undefined,
+        bio: bio || undefined,
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update session user data
+      req.user = updatedUser;
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update profile" });
+    }
   });
 
   // Tutors
@@ -129,9 +155,22 @@ export async function registerRoutes(
     res.json(books);
   });
 
+  // Users by role (e.g., students for teachers)
+  app.get("/api/users", async (req, res) => {
+    const role = req.query.role as string;
+    const location = req.query.location as string | undefined;
+    if (!role) return res.status(400).json({ message: "role query param required" });
+    try {
+      const users = await storage.getUsersByRole(role, location);
+      res.json(users);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   app.post(api.books.create.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if ((req.user as any).role !== 'seller' && (req.user as any).role !== 'student') return res.status(403).send("Only sellers and students can sell books");
+    if ((req.user as any).role !== 'student' && (req.user as any).role !== 'teacher' && (req.user as any).role !== 'institution') return res.status(403).send("Only students, teachers, and institutions can sell books");
 
     const bookData = insertBookSchema.omit({ sellerId: true }).parse(req.body);
     const book = await storage.createBook({

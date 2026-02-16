@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import Logo from "../Assets/Logo (2).png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  GraduationCap, 
-  BookOpen, 
-  Briefcase, 
-  User, 
-  LogOut, 
+import {
+  GraduationCap,
+  BookOpen,
+  Briefcase,
+  User,
+  LogOut,
   Menu,
   LayoutDashboard
 } from "lucide-react";
@@ -30,11 +31,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   const NavLink = ({ href, children, icon: Icon }: { href: string; children: React.ReactNode; icon: any }) => (
     <Link href={href}>
-      <div 
+      <div
         className={`
           flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer
-          ${isActive(href) 
-            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
+          ${isActive(href)
+            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
           }
         `}
@@ -49,14 +50,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 animate-slide-in-from-top">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/">
+          <Link href={user ? "/dashboard" : "/"}>
             <div className="flex items-center gap-2 cursor-pointer group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-primary/40 transition-shadow">
-                E
-              </div>
-              <span className="font-heading font-bold text-xl tracking-tight text-foreground">
+              <img className="h-7 transition-transform duration-300 group-hover:scale-110" src={Logo} alt="" />
+              <span className="font-heading font-bold text-xl tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary">
                 EduConnect
               </span>
             </div>
@@ -74,11 +73,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full ring-2 ring-primary/10 hover:ring-primary/20 transition-all">
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full ring-2 ring-primary/10 hover:ring-primary/20 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20">
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuContent className="w-56 animate-scale-in" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.name}</p>
@@ -89,28 +88,30 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <Link href="/dashboard">
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer transition-colors duration-200">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive cursor-pointer"
-                    onClick={() => logout.mutate()}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
+                  <Link href="/">
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive cursor-pointer transition-colors duration-200"
+                      onClick={() => logout.mutate()}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </Link>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/login">
-                  <Button variant="ghost" className="font-medium">Log in</Button>
+                  <Button variant="ghost" className="font-medium btn-hover rounded-xl">Log in</Button>
                 </Link>
                 <Link href="/register">
-                  <Button className="font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
+                  <Button className="font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all btn-hover rounded-xl">
                     Get Started
                   </Button>
                 </Link>
@@ -144,14 +145,14 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-8 animate-enter">
+      <main className="flex-1 container mx-auto px-4 py-8 animate-fade-in">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 bg-background py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2024 EduConnect. Empowering education everywhere.</p>
+      <footer className="border-t border-border/40 bg-background py-8 animate-slide-in-from-bottom">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground">
+          <p>© 2026 EduConnect. Empowering education everywhere.</p>
         </div>
       </footer>
     </div>
