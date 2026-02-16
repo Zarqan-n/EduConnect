@@ -108,7 +108,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/login">
-                  <Button variant="ghost" className="font-medium btn-hover rounded-xl">Log in</Button>
+                  <Button variant="ghost" className="hidden sm:flex font-medium btn-hover rounded-xl">Log in</Button>
                 </Link>
                 <Link href="/register">
                   <Button className="font-medium bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all btn-hover rounded-xl">
