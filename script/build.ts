@@ -65,11 +65,3 @@ buildAll().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-
-import { copyFile } from "fs/promises";
-import path from "path";
-
-await copyFile(
-  path.resolve("node_modules/connect-pg-simple/table.sql"),
-  path.resolve("dist/table.sql")
-);

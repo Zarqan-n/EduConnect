@@ -12,17 +12,34 @@ import { pool } from "./db";
 const scryptAsync = promisify(scrypt);
 const PostgresqlStore = connectPg(session);
 
+async function ensureSessionTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS "session" (
+      "sid" varchar NOT NULL,
+      "sess" json NOT NULL,
+      "expire" timestamp NOT NULL,
+      CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS "IDX_session_expire"
+    ON "session" ("expire");
+  `);
+}
+
+
 export async function setupAuth(app: Express) {
-  // Determine session store: prefer Postgres-backed store if DB reachable,
-  // otherwise fall back to the in-memory session store for development.
+
+  await ensureSessionTable();   // keep this
+
   let store: session.Store;
   try {
-    // test DB connectivity
     const client = await pool.connect();
     client.release();
+
     store = new PostgresqlStore({
-      pool,
-      createTableIfMissing: true
+      pool   // ✅ ONLY pool
     });
 
   } catch (err: any) {
