@@ -183,7 +183,7 @@ export function MapView({
                         <div className="text-xs space-y-1 bg-secondary/30 p-2 rounded">
                           {marker.details.rate && (
                             <p className="flex items-center gap-1">
-                             ₹{marker.details.rate}/hour
+                             ₹{marker.details.rate}/Month
                             </p>
                           )}
                           {marker.details.subjects && marker.details.subjects.length > 0 && (
@@ -218,55 +218,7 @@ export function MapView({
             </MapContainer>
           </div>
 
-          {/* List View */}
-          <div className="lg:w-80 max-h-96 overflow-y-auto pr-2">
-            {filteredMarkers.length > 0 ? (
-              <div className="space-y-2">
-                {filteredMarkers.map((marker) => (
-                  <div
-                    key={`${marker.type}-${marker.id}`}
-                    className="p-3 border rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
-                    onClick={() => onMarkerClick?.(marker)}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon(marker.type)}
-                        <h4 className="font-medium text-sm">{marker.name}</h4>
-                      </div>
-                      <Badge className={`text-xs ${getTypeBadgeColor(marker.type)}`}>
-                        {marker.type}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      📍 {marker.distance.toFixed(1)} km away
-                    </p>
-                    {marker.details && (
-                      <div className="text-xs space-y-1">
-                        {marker.details.rate && (
-                          <p>
-                            <span className="text-muted-foreground">Hourly Rate:</span> ₹{marker.details.rate}
-                          </p>
-                        )}
-                        {marker.details.rating && (
-                          <p>
-                            <span className="text-muted-foreground">Rating:</span> ⭐ {marker.details.rating}/5
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                <Building2 className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground mb-2">No results found</p>
-                <p className="text-xs text-muted-foreground">
-                  Try increasing the distance or changing your location
-                </p>
-              </div>
-            )}
-          </div>
+
         </div>
       </CardContent>
     </Card>

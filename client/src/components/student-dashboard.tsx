@@ -59,7 +59,7 @@ export function StudentDashboard({ title, description, showStudents = false, vie
     if (!selectedLocation) return;
 
     setIsLoadingMarkers(true);
-    
+
     // Simulate API delay
     const timer = setTimeout(() => {
       const markers: MapMarker[] = [];
@@ -73,7 +73,7 @@ export function StudentDashboard({ title, description, showStudents = false, vie
           const offsetLon = (Math.random() - 0.5) * 0.05;
           const lat = selectedLocation.lat + offsetLat;
           const lon = selectedLocation.lon + offsetLon;
-          
+
           // Calculate approximate distance
           const distance = calculateDistance(selectedLocation.lat, selectedLocation.lon, lat, lon);
 
@@ -184,9 +184,9 @@ export function StudentDashboard({ title, description, showStudents = false, vie
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
@@ -201,14 +201,14 @@ export function StudentDashboard({ title, description, showStudents = false, vie
       {/* Location Search Section */}
       <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              {title || "Find Services Near You"}
-            </CardTitle>
-            <CardDescription>
-              {description || "Search for tutors, book sellers, and educational institutions in your area"}
-            </CardDescription>
-          </CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            {title || "Find Services Near You"}
+          </CardTitle>
+          <CardDescription>
+            {description || "Search for tutors, book sellers, and educational institutions in your area"}
+          </CardDescription>
+        </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -292,7 +292,7 @@ export function StudentDashboard({ title, description, showStudents = false, vie
             {mapMarkers.filter(m => m.distance <= distanceFilter).map(marker => (
               <Card key={`${marker.type}-${marker.id}`}>
                 <CardContent>
-                  <div className="flex items-start justify-between">
+                  <div className="flex pt-6 justify-between">
                     <div>
                       <h4 className="font-medium">{marker.name}</h4>
                       <p className="text-xs text-muted-foreground">{marker.type} • {marker.distance.toFixed(1)} km</p>
@@ -300,15 +300,16 @@ export function StudentDashboard({ title, description, showStudents = false, vie
                         <p className="text-xs mt-1">Subjects: {marker.details.subjects.join(", ")}</p>
                       )}
                       {marker.details?.rate && (
-                        <p className="text-xs mt-1">Rate: ₹{marker.details.rate}/hour</p>
+                        <p className="text-xs mt-1">Rate: ₹{marker.details.rate}/Month</p>
                       )}
                       {marker.details?.price && (
                         <p className="text-xs mt-1">Price: ₹{marker.details.price}</p>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="flex items-center">
                       <button
-                        className="text-sm text-primary"
+                        
+                        className="border rounded p-1.5 bg-blue-300"
                         onClick={() => {
                           const email = (marker.details as any)?.sellerEmail || (marker.details as any)?.contactEmail;
                           if (email) {
