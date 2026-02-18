@@ -6,6 +6,7 @@ import passport from "passport";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { insertTutorProfileSchema, insertJobSchema, insertBookSchema } from "@shared/schema";
+import { generateEduConnectAnswer } from "./ai";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -178,6 +179,45 @@ export async function registerRoutes(
       sellerId: (req.user as any).id
     });
     res.status(201).json(book);
+  });
+
+  // AI Chatbot (Gemini) - keeps API key on server
+  const chatSchema = z
+    .object({
+      messages: z
+        .array(
+          z.object({
+            role: z.enum(["user", "assistant"]),
+            text: z.string().min(1).max(2000),
+          }),
+        )
+        .min(1)
+        .max(20),
+    })
+    .strict();
+
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { messages } = chatSchema.parse(req.body);
+
+      const u = req.isAuthenticated() ? (req.user as any) : undefined;
+      const userContext = u
+        ? `name=${u.name ?? ""}, role=${u.role ?? ""}, location=${u.location ?? ""}`
+        : undefined;
+
+      const text = await generateEduConnectAnswer({ messages, userContext });
+      res.json({ text });
+    } catch (err: any) {
+      const message = err?.message || "Failed to generate response";
+      if (typeof message === "string" && message.includes("Missing GEMINI_API_KEY")) {
+        return res.status(503).json({ message: "AI is not configured on the server yet." });
+      }
+      if (err?.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid request body" });
+      }
+      console.error(err);
+      return res.status(500).json({ message: "AI request failed" });
+    }
   });
 
   return httpServer;

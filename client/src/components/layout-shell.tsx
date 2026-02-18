@@ -17,7 +17,8 @@ import {
   User,
   LogOut,
   Menu,
-  LayoutDashboard
+  LayoutDashboard,
+  MessageCircle
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -63,6 +64,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-2">
+            {user && <NavLink href="/dashboard" icon={LayoutDashboard}>Home</NavLink>}
             <NavLink href="/tutors" icon={GraduationCap}>Find Tutors</NavLink>
             <NavLink href="/jobs" icon={Briefcase}>Job Board</NavLink>
             <NavLink href="/books" icon={BookOpen}>Book Market</NavLink>
@@ -91,6 +93,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                     <DropdownMenuItem className="cursor-pointer transition-colors duration-200">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/chatbot">
+                    <DropdownMenuItem className="cursor-pointer transition-colors duration-200">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Chatbot
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
@@ -127,6 +135,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <div className="flex flex-col gap-4 mt-8">
+                  {user && <NavLink href="/dashboard" icon={LayoutDashboard}>Home</NavLink>}
                   <NavLink href="/tutors" icon={GraduationCap}>Find Tutors</NavLink>
                   <NavLink href="/jobs" icon={Briefcase}>Job Board</NavLink>
                   <NavLink href="/books" icon={BookOpen}>Book Market</NavLink>

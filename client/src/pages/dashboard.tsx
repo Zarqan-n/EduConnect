@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { insertTutorProfileSchema, insertJobSchema, insertBookSchema } from "@sh
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, UserCircle, Briefcase, Book, Settings } from "lucide-react";
+import { Bot, Loader2, Plus, UserCircle, Briefcase, Book, Settings } from "lucide-react";
 import { z } from "zod";
 import { useState } from "react";
 import { SettingsModal } from "@/components/settings-modal";
@@ -28,11 +29,21 @@ export default function Dashboard() {
       <div className="space-y-8">
         <div className="gradient-primary rounded-3xl p-8 flex items-center justify-between">
           <h1 className="text-3xl font-heading font-bold header-gradient-text animate-slide-in-from-left">Dashboard</h1>
-          <SettingsModal>
-            <Button variant="outline" className="gap-2 rounded-xl btn-hover animate-slide-in-from-right bg-white hover:bg-gray-50 border-gray-200">
-              <Settings className="w-4 h-4" /> Settings
-            </Button>
-          </SettingsModal>
+          <div className="flex items-center gap-3">
+            <Link href="/chatbot">
+              <Button
+                variant="outline"
+                className="gap-2 rounded-xl btn-hover animate-slide-in-from-right bg-white hover:bg-gray-50 border-gray-200"
+              >
+                <Bot className="w-4 h-4" /> Chatbot
+              </Button>
+            </Link>
+            <SettingsModal>
+              <Button variant="outline" className="gap-2 rounded-xl btn-hover animate-slide-in-from-right bg-white hover:bg-gray-50 border-gray-200">
+                <Settings className="w-4 h-4" /> Settings
+              </Button>
+            </SettingsModal>
+          </div>
         </div>
 
         {user.role === "student" ? (
