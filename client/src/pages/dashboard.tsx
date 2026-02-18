@@ -35,12 +35,12 @@ export default function Dashboard() {
                 variant="outline"
                 className="gap-2 rounded-xl btn-hover animate-slide-in-from-right bg-white hover:bg-gray-50 border-gray-200"
               >
-                <Bot className="w-4 h-4" /> Chatbot
+                <Bot className="w-4 h-4" /> <span className="hidden md:flex">Chatbot</span>
               </Button>
             </Link>
             <SettingsModal>
               <Button variant="outline" className="gap-2 rounded-xl btn-hover animate-slide-in-from-right bg-white hover:bg-gray-50 border-gray-200">
-                <Settings className="w-4 h-4" /> Settings
+                <Settings className="w-4 h-4" /> <span className="hidden md:flex">Settings</span>
               </Button>
             </SettingsModal>
           </div>

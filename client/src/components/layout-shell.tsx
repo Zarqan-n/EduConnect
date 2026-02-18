@@ -18,7 +18,9 @@ import {
   LogOut,
   Menu,
   LayoutDashboard,
-  MessageCircle
+  MessageCircle,
+  ChartBarIcon,
+  MessageSquareMore
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -139,6 +141,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                   <NavLink href="/tutors" icon={GraduationCap}>Find Tutors</NavLink>
                   <NavLink href="/jobs" icon={Briefcase}>Job Board</NavLink>
                   <NavLink href="/books" icon={BookOpen}>Book Market</NavLink>
+                  <NavLink href="/chatbot" icon={MessageSquareMore}>Assistance</NavLink>
                   <div className="h-px bg-border my-2" />
                   {!user && (
                     <>
