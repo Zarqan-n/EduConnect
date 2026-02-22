@@ -63,6 +63,14 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
+  // ensure initial data exists (admin etc). uses whatever storage is active
+  try {
+    const { seed } = await import("./seed");
+    await seed();
+  } catch (err) {
+    console.error("Error seeding on startup:", err);
+  }
+
   // lightweight health check for platform load balancers
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });

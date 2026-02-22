@@ -30,8 +30,13 @@ async function ensureSessionTable() {
 
 
 export async function setupAuth(app: Express) {
-
-  await ensureSessionTable();   // keep this
+  // session table may require a live database; if DB isn't available we
+  // skip table creation and continue with memory store fallback.
+  try {
+    await ensureSessionTable();   // keep this
+  } catch (err: any) {
+    console.warn("Skipping session table creation, DB unreachable:", err.message || err);
+  }
 
   let store: session.Store;
   try {

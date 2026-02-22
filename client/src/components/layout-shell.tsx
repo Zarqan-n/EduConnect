@@ -70,6 +70,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             <NavLink href="/tutors" icon={GraduationCap}>Find Tutors</NavLink>
             <NavLink href="/jobs" icon={Briefcase}>Job Board</NavLink>
             <NavLink href="/books" icon={BookOpen}>Book Market</NavLink>
+            {user?.role === 'admin' && <NavLink href="/admin" icon={ChartBarIcon}>Admin</NavLink>}
           </nav>
 
           {/* Auth Actions */}
@@ -141,7 +142,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                   <NavLink href="/tutors" icon={GraduationCap}>Find Tutors</NavLink>
                   <NavLink href="/jobs" icon={Briefcase}>Job Board</NavLink>
                   <NavLink href="/books" icon={BookOpen}>Book Market</NavLink>
-                  <NavLink href="/chatbot" icon={MessageSquareMore}>Assistance</NavLink>
+                  {user?.role === 'admin' && <NavLink href="/admin" icon={ChartBarIcon}>Admin</NavLink>}
+                  <NavLink href="/chatbot" icon={MessageSquareMore}>Assistant</NavLink>
                   <div className="h-px bg-border my-2" />
                   {!user && (
                     <>

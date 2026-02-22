@@ -135,6 +135,20 @@ export async function registerRoutes(
     res.status(201).json(job);
   });
 
+  // Admin can delete a job listing
+  app.delete("/api/jobs/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    const id = Number(req.params.id);
+    try {
+      await storage.deleteJob(id);
+      res.sendStatus(204);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete job" });
+    }
+  });
+
   app.post(api.jobs.apply.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     if ((req.user as any).role !== 'teacher') return res.status(403).send("Only teachers can apply");
@@ -156,7 +170,7 @@ export async function registerRoutes(
     res.json(books);
   });
 
-  // Users by role (e.g., students for teachers)
+  // Users by role (e.g., students for teachers) - public endpoint unchanged
   app.get("/api/users", async (req, res) => {
     const role = req.query.role as string;
     const location = req.query.location as string | undefined;
@@ -166,6 +180,39 @@ export async function registerRoutes(
       res.json(users);
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Admin-only user listing / filtering (all roles if none specified)
+  app.get("/api/admin/users", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    const role = req.query.role as string | undefined;
+    const location = req.query.location as string | undefined;
+    try {
+      if (role) {
+        const users = await storage.getUsersByRole(role, location);
+        return res.json(users);
+      }
+      const users = await storage.getAllUsers();
+      return res.json(users);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Admin can delete a user
+  app.delete("/api/admin/users/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    const id = Number(req.params.id);
+    try {
+      await storage.deleteUser(id);
+      res.sendStatus(204);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete user" });
     }
   });
 
@@ -179,6 +226,20 @@ export async function registerRoutes(
       sellerId: (req.user as any).id
     });
     res.status(201).json(book);
+  });
+
+  // Admin can delete a book
+  app.delete("/api/books/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    const id = Number(req.params.id);
+    try {
+      await storage.deleteBook(id);
+      res.sendStatus(204);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete book" });
+    }
   });
 
   // AI Chatbot (Gemini) - keeps API key on server

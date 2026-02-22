@@ -12,6 +12,7 @@ import JobsPage from "@/pages/jobs";
 import BooksPage from "@/pages/books";
 import Dashboard from "@/pages/dashboard";
 import ChatbotPage from "@/pages/chatbot";
+import AdminPage from "@/pages/admin";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/books" component={BooksPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/chatbot" component={ChatbotPage} />
+      <Route path="/admin" component={AdminPage} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

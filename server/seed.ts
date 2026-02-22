@@ -3,11 +3,20 @@ import { hashPassword } from "./auth";
 import { db } from "./db";
 import { users } from "@shared/schema";
 
-async function seed() {
+export async function seed() {
   console.log("Seeding database...");
 
-  // Check if users exist
-  const existingUsers = await db.select().from(users).limit(1);
+  // Check if users exist in the database. :
+  // If the database connection fails, we assume no users and allow
+  // the memory storage fallback to proceed.
+  let existingUsers: any[] = [];
+  try {
+    existingUsers = await db.select().from(users).limit(1);
+  } catch (err: any) {
+    console.warn("Skipping database user check (DB unreachable):", err.message);
+    // leave existingUsers empty so we seed into memory storage
+  }
+
   if (existingUsers.length > 0) {
     console.log("Database already seeded.");
     return;
@@ -56,6 +65,20 @@ async function seed() {
     bio: "Best used books in the city."
   });
 
+  // Admin user (credentials may be overridden with env vars)
+  const adminUsername = process.env.ADMIN_USERNAME || "d@B"; // default username/email
+  const adminRawPassword = process.env.ADMIN_PASSWORD || "dB"; // default password
+  const adminPassword = await hashPassword(adminRawPassword);
+  await storage.createUser({
+    username: adminUsername,
+    password: adminPassword,
+    role: "admin",
+    name: "Site Administrator",
+    email: process.env.ADMIN_EMAIL || "admin@educonnect.local",
+    location: "Remote",
+    bio: "Administrator account."
+  });
+
   // Create Tutor Profile
   await storage.createTutorProfile({
     userId: teacher.id,
@@ -94,4 +117,8 @@ async function seed() {
   console.log("Seeding complete!");
 }
 
-seed().catch(console.error).finally(() => process.exit());
+
+// if executed directly from CLI (e.g. `npx tsx server/seed.ts`), run now
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seed().catch(console.error).finally(() => process.exit());
+}

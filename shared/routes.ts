@@ -120,7 +120,16 @@ export const api = {
         201: z.custom<typeof applications.$inferSelect>(),
         400: errorSchemas.validation,
       }
-    }
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/jobs/:id' as const,
+      responses: {
+        204: z.void(),
+        403: errorSchemas.unauthorized,
+        500: errorSchemas.internal,
+      },
+    },
   },
   books: {
     list: {
@@ -141,6 +150,41 @@ export const api = {
       responses: {
         201: z.custom<typeof books.$inferSelect>(),
         400: errorSchemas.validation,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/books/:id' as const,
+      responses: {
+        204: z.void(),
+        403: errorSchemas.unauthorized,
+        500: errorSchemas.internal,
+      },
+    },
+  },
+  admin: {
+    users: {
+      list: {
+        method: 'GET' as const,
+        path: '/api/admin/users' as const,
+        input: z.object({
+          role: z.string().optional(),
+          location: z.string().optional(),
+        }).optional(),
+        responses: {
+          200: z.array(z.custom<typeof users.$inferSelect>()),
+          403: errorSchemas.unauthorized,
+          500: errorSchemas.internal,
+        },
+      },
+      delete: {
+        method: 'DELETE' as const,
+        path: '/api/admin/users/:id' as const,
+        responses: {
+          204: z.void(),
+          403: errorSchemas.unauthorized,
+          500: errorSchemas.internal,
+        },
       },
     },
   },
