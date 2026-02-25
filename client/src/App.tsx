@@ -26,7 +26,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/chatbot" component={ChatbotPage} />
       <Route path="/admin" component={AdminPage} />
-      
+
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

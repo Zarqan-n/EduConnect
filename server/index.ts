@@ -3,6 +3,11 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { storage } from "./storage";
+import { hashPassword } from "./auth";
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 const app = express();
 const httpServer = createServer(app);
@@ -34,6 +39,25 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+async function ensureAdminUser() {
+  try {
+    const [existingAdmin] = await db.select().from(users).where(eq(users.role, "admin")).limit(1);
+    if (!existingAdmin) {
+      const password = await hashPassword("admin123");
+      await storage.createUser({
+        username: "admin",
+        password,
+        role: "admin",
+        name: "Admin",
+        email: "admin@educonnect.com",
+      });
+      log("Default admin account created (username: admin, password: admin123)", "setup");
+    }
+  } catch (err: any) {
+    console.warn("Could not auto-create admin user:", err?.message || err);
+  }
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -62,14 +86,7 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
-
-  // ensure initial data exists (admin etc). uses whatever storage is active
-  try {
-    const { seed } = await import("./seed");
-    await seed();
-  } catch (err) {
-    console.error("Error seeding on startup:", err);
-  }
+  await ensureAdminUser();
 
   // lightweight health check for platform load balancers
   app.get("/health", (_req, res) => {

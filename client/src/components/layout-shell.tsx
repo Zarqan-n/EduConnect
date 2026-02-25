@@ -20,7 +20,8 @@ import {
   LayoutDashboard,
   MessageCircle,
   ChartBarIcon,
-  MessageSquareMore
+  MessageSquareMore,
+  Shield
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -70,7 +71,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             <NavLink href="/tutors" icon={GraduationCap}>Find Tutors</NavLink>
             <NavLink href="/jobs" icon={Briefcase}>Job Board</NavLink>
             <NavLink href="/books" icon={BookOpen}>Book Market</NavLink>
-            {user?.role === 'admin' && <NavLink href="/admin" icon={ChartBarIcon}>Admin</NavLink>}
+            {user?.role === "admin" && <NavLink href="/admin" icon={Shield}>Admin</NavLink>}
           </nav>
 
           {/* Auth Actions */}
@@ -104,6 +105,14 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                       Chatbot
                     </DropdownMenuItem>
                   </Link>
+                  {(user as any)?.role === "admin" && (
+                    <Link href="/admin">
+                      <DropdownMenuItem className="cursor-pointer transition-colors duration-200">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Panel
+                      </DropdownMenuItem>
+                    </Link>
+                  )}
                   <DropdownMenuSeparator />
                   <Link href="/">
                     <DropdownMenuItem
@@ -142,8 +151,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                   <NavLink href="/tutors" icon={GraduationCap}>Find Tutors</NavLink>
                   <NavLink href="/jobs" icon={Briefcase}>Job Board</NavLink>
                   <NavLink href="/books" icon={BookOpen}>Book Market</NavLink>
-                  {user?.role === 'admin' && <NavLink href="/admin" icon={ChartBarIcon}>Admin</NavLink>}
                   <NavLink href="/chatbot" icon={MessageSquareMore}>Assistant</NavLink>
+                  {user?.role === "admin" && <NavLink href="/admin" icon={Shield}>Admin Panel</NavLink>}
                   <div className="h-px bg-border my-2" />
                   {!user && (
                     <>

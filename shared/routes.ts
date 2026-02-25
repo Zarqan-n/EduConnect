@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { 
-  insertUserSchema, insertTutorProfileSchema, insertJobSchema, 
+import {
+  insertUserSchema, insertTutorProfileSchema, insertJobSchema,
   insertApplicationSchema, insertBookSchema, insertReviewSchema,
   users, tutorProfiles, jobs, applications, books, reviews,
   type InsertUser, type InsertTutorProfile, type InsertJob, type InsertBook, type InsertReview,
@@ -120,16 +120,7 @@ export const api = {
         201: z.custom<typeof applications.$inferSelect>(),
         400: errorSchemas.validation,
       }
-    },
-    delete: {
-      method: 'DELETE' as const,
-      path: '/api/jobs/:id' as const,
-      responses: {
-        204: z.void(),
-        403: errorSchemas.unauthorized,
-        500: errorSchemas.internal,
-      },
-    },
+    }
   },
   books: {
     list: {
@@ -152,39 +143,55 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
-    delete: {
-      method: 'DELETE' as const,
-      path: '/api/books/:id' as const,
-      responses: {
-        204: z.void(),
-        403: errorSchemas.unauthorized,
-        500: errorSchemas.internal,
-      },
-    },
   },
   admin: {
+    stats: {
+      method: 'GET' as const,
+      path: '/api/admin/stats' as const,
+      responses: {
+        200: z.object({ users: z.number(), tutors: z.number(), jobs: z.number(), books: z.number() }),
+      },
+    },
     users: {
       list: {
         method: 'GET' as const,
         path: '/api/admin/users' as const,
-        input: z.object({
-          role: z.string().optional(),
-          location: z.string().optional(),
-        }).optional(),
         responses: {
           200: z.array(z.custom<typeof users.$inferSelect>()),
-          403: errorSchemas.unauthorized,
-          500: errorSchemas.internal,
         },
       },
       delete: {
         method: 'DELETE' as const,
         path: '/api/admin/users/:id' as const,
+        responses: { 200: z.void() },
+      },
+    },
+    jobs: {
+      list: {
+        method: 'GET' as const,
+        path: '/api/admin/jobs' as const,
         responses: {
-          204: z.void(),
-          403: errorSchemas.unauthorized,
-          500: errorSchemas.internal,
+          200: z.array(z.custom<typeof jobs.$inferSelect & { institution: typeof users.$inferSelect }>()),
         },
+      },
+      delete: {
+        method: 'DELETE' as const,
+        path: '/api/admin/jobs/:id' as const,
+        responses: { 200: z.void() },
+      },
+    },
+    books: {
+      list: {
+        method: 'GET' as const,
+        path: '/api/admin/books' as const,
+        responses: {
+          200: z.array(z.custom<typeof books.$inferSelect & { seller: typeof users.$inferSelect }>()),
+        },
+      },
+      delete: {
+        method: 'DELETE' as const,
+        path: '/api/admin/books/:id' as const,
+        responses: { 200: z.void() },
       },
     },
   },

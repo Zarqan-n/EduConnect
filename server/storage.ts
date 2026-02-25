@@ -4,7 +4,7 @@ import {
   users, tutorProfiles, jobs, applications, books, reviews
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, desc } from "drizzle-orm";
+import { eq, ilike, and, desc, count } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -13,8 +13,6 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
   getUsersByRole(role: string, location?: string): Promise<User[]>;
-  getAllUsers(): Promise<User[]>;
-  deleteUser(id: number): Promise<void>;
 
   // Tutors
   createTutorProfile(profile: InsertTutorProfile): Promise<TutorProfile>;
@@ -29,11 +27,19 @@ export interface IStorage {
   // Books
   createBook(book: InsertBook): Promise<Book>;
   getBooks(filters?: { subject?: string, classLevel?: string }): Promise<(Book & { seller: User })[]>;
-  deleteBook(id: number): Promise<void>;
 
   // Reviews
   createReview(review: InsertReview): Promise<Review>;
   getReviewsForTutor(tutorId: number): Promise<Review[]>;
+
+  // Admin
+  getAllUsers(): Promise<User[]>;
+  getAllJobs(): Promise<(Job & { institution: User })[]>;
+  getAllBooks(): Promise<(Book & { seller: User })[]>;
+  deleteUser(id: number): Promise<void>;
+  deleteJob(id: number): Promise<void>;
+  deleteBook(id: number): Promise<void>;
+  getStats(): Promise<{ users: number; tutors: number; jobs: number; books: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -53,15 +59,6 @@ export class DatabaseStorage implements IStorage {
     if (location) conditions.push(ilike(users.location, `%${location}%`));
     const results = await db.select().from(users).where(and(...conditions));
     return results;
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    const results = await db.select().from(users);
-    return results;
-  }
-
-  async deleteUser(id: number): Promise<void> {
-    await db.delete(users).where(eq(users.id, id));
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -116,10 +113,6 @@ export class DatabaseStorage implements IStorage {
     return newJob;
   }
 
-  async deleteJob(id: number): Promise<void> {
-    await db.delete(jobs).where(eq(jobs.id, id));
-  }
-
   async getJobs(query?: string): Promise<(Job & { institution: User })[]> {
     let baseQuery = db.select({
       job: jobs,
@@ -159,11 +152,6 @@ export class DatabaseStorage implements IStorage {
     return newBook;
   }
 
-  async deleteBook(id: number): Promise<void> {
-    // in real schema, consider cascade on foreign keys or additional cleanup
-    await db.delete(books).where(eq(books.id, id));
-  }
-
   async getBooks(filters?: { subject?: string, classLevel?: string }): Promise<(Book & { seller: User })[]> {
     const results = await db.select({
       book: books,
@@ -186,10 +174,6 @@ export class DatabaseStorage implements IStorage {
     return mapped;
   }
 
-  async deleteBook(id: number): Promise<void> {
-    await db.delete(books).where(eq(books.id, id));
-  }
-
   // Reviews
   async createReview(review: InsertReview): Promise<Review> {
     const [newReview] = await db.insert(reviews).values(review).returning();
@@ -198,6 +182,65 @@ export class DatabaseStorage implements IStorage {
 
   async getReviewsForTutor(tutorId: number): Promise<Review[]> {
     return await db.select().from(reviews).where(eq(reviews.tutorId, tutorId));
+  }
+
+  // Admin
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllJobs(): Promise<(Job & { institution: User })[]> {
+    const results = await db.select({ job: jobs, institution: users })
+      .from(jobs)
+      .innerJoin(users, eq(jobs.institutionId, users.id))
+      .orderBy(desc(jobs.createdAt));
+    return results.map(r => ({ ...r.job, institution: r.institution }));
+  }
+
+  async getAllBooks(): Promise<(Book & { seller: User })[]> {
+    const results = await db.select({ book: books, seller: users })
+      .from(books)
+      .innerJoin(users, eq(books.sellerId, users.id))
+      .orderBy(desc(books.createdAt));
+    return results.map(r => ({ ...r.book, seller: r.seller }));
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    // Delete related records first
+    await db.delete(reviews).where(eq(reviews.studentId, id));
+    await db.delete(reviews).where(eq(reviews.tutorId, id));
+    await db.delete(applications).where(eq(applications.teacherId, id));
+    await db.delete(books).where(eq(books.sellerId, id));
+    // Delete jobs and their applications
+    const userJobs = await db.select().from(jobs).where(eq(jobs.institutionId, id));
+    for (const job of userJobs) {
+      await db.delete(applications).where(eq(applications.jobId, job.id));
+    }
+    await db.delete(jobs).where(eq(jobs.institutionId, id));
+    await db.delete(tutorProfiles).where(eq(tutorProfiles.userId, id));
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async deleteJob(id: number): Promise<void> {
+    await db.delete(applications).where(eq(applications.jobId, id));
+    await db.delete(jobs).where(eq(jobs.id, id));
+  }
+
+  async deleteBook(id: number): Promise<void> {
+    await db.delete(books).where(eq(books.id, id));
+  }
+
+  async getStats(): Promise<{ users: number; tutors: number; jobs: number; books: number }> {
+    const [usersCount] = await db.select({ count: count() }).from(users);
+    const [tutorsCount] = await db.select({ count: count() }).from(tutorProfiles);
+    const [jobsCount] = await db.select({ count: count() }).from(jobs);
+    const [booksCount] = await db.select({ count: count() }).from(books);
+    return {
+      users: usersCount.count,
+      tutors: tutorsCount.count,
+      jobs: jobsCount.count,
+      books: booksCount.count,
+    };
   }
 }
 
@@ -221,14 +264,6 @@ class MemoryStorage implements IStorage {
 
   async getUsersByRole(role: string, location?: string): Promise<User[]> {
     return this.users.filter(u => u.role === role && (!location || (u.location && u.location.includes(location))));
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    return [...this.users];
-  }
-
-  async deleteUser(id: number): Promise<void> {
-    this.users = this.users.filter(u => u.id !== id);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -268,10 +303,6 @@ class MemoryStorage implements IStorage {
     return j;
   }
 
-  async deleteJob(id: number): Promise<void> {
-    this.jobs = this.jobs.filter(j => j.id !== id);
-  }
-
   async getJobs(query?: string): Promise<(Job & { institution: User })[]> {
     return [];
   }
@@ -289,10 +320,6 @@ class MemoryStorage implements IStorage {
     return b;
   }
 
-  async deleteBook(id: number): Promise<void> {
-    this.booksArr = this.booksArr.filter(b => b.id !== id);
-  }
-
   async getBooks(filters?: { subject?: string, classLevel?: string }): Promise<(Book & { seller: User })[]> {
     return [];
   }
@@ -305,6 +332,40 @@ class MemoryStorage implements IStorage {
 
   async getReviewsForTutor(tutorId: number): Promise<Review[]> {
     return [];
+  }
+
+  // Admin
+  async getAllUsers(): Promise<User[]> {
+    return this.users;
+  }
+
+  async getAllJobs(): Promise<(Job & { institution: User })[]> {
+    return [];
+  }
+
+  async getAllBooks(): Promise<(Book & { seller: User })[]> {
+    return [];
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    this.users = this.users.filter(u => u.id !== id);
+  }
+
+  async deleteJob(id: number): Promise<void> {
+    this.jobs = this.jobs.filter(j => j.id !== id);
+  }
+
+  async deleteBook(id: number): Promise<void> {
+    this.booksArr = this.booksArr.filter(b => b.id !== id);
+  }
+
+  async getStats(): Promise<{ users: number; tutors: number; jobs: number; books: number }> {
+    return {
+      users: this.users.length,
+      tutors: this.tutors.length,
+      jobs: this.jobs.length,
+      books: this.booksArr.length,
+    };
   }
 }
 

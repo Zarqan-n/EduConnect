@@ -21,13 +21,13 @@ export async function registerRoutes(
       if (existing) {
         return res.status(400).json({ message: "Username already exists", field: "username" });
       }
-      
+
       const password = await hashPassword(req.body.password);
-      const user = await storage.createUser({ 
-        ...req.body, 
-        password 
+      const user = await storage.createUser({
+        ...req.body,
+        password
       });
-      
+
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(201).json(user);
@@ -65,7 +65,7 @@ export async function registerRoutes(
   app.put("/api/users/profile", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const userId = (req.user as any).id;
-    
+
     try {
       const { name, email, location, bio } = req.body;
       const updatedUser = await storage.updateUser(userId, {
@@ -74,11 +74,11 @@ export async function registerRoutes(
         location: location || undefined,
         bio: bio || undefined,
       });
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Update session user data
       req.user = updatedUser;
       res.json(updatedUser);
@@ -135,20 +135,6 @@ export async function registerRoutes(
     res.status(201).json(job);
   });
 
-  // Admin can delete a job listing
-  app.delete("/api/jobs/:id", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    const id = Number(req.params.id);
-    try {
-      await storage.deleteJob(id);
-      res.sendStatus(204);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete job" });
-    }
-  });
-
   app.post(api.jobs.apply.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     if ((req.user as any).role !== 'teacher') return res.status(403).send("Only teachers can apply");
@@ -170,7 +156,7 @@ export async function registerRoutes(
     res.json(books);
   });
 
-  // Users by role (e.g., students for teachers) - public endpoint unchanged
+  // Users by role (e.g., students for teachers)
   app.get("/api/users", async (req, res) => {
     const role = req.query.role as string;
     const location = req.query.location as string | undefined;
@@ -180,39 +166,6 @@ export async function registerRoutes(
       res.json(users);
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  // Admin-only user listing / filtering (all roles if none specified)
-  app.get("/api/admin/users", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    const role = req.query.role as string | undefined;
-    const location = req.query.location as string | undefined;
-    try {
-      if (role) {
-        const users = await storage.getUsersByRole(role, location);
-        return res.json(users);
-      }
-      const users = await storage.getAllUsers();
-      return res.json(users);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  // Admin can delete a user
-  app.delete("/api/admin/users/:id", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    const id = Number(req.params.id);
-    try {
-      await storage.deleteUser(id);
-      res.sendStatus(204);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete user" });
     }
   });
 
@@ -226,20 +179,6 @@ export async function registerRoutes(
       sellerId: (req.user as any).id
     });
     res.status(201).json(book);
-  });
-
-  // Admin can delete a book
-  app.delete("/api/books/:id", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    const id = Number(req.params.id);
-    try {
-      await storage.deleteBook(id);
-      res.sendStatus(204);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete book" });
-    }
   });
 
   // AI Chatbot (Gemini) - keeps API key on server
@@ -278,6 +217,80 @@ export async function registerRoutes(
       }
       console.error(err);
       return res.status(500).json({ message: "AI request failed" });
+    }
+  });
+
+  // ── Admin Routes ──────────────────────────────────────────────
+  const requireAdmin = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if ((req.user as any).role !== "admin") return res.status(403).json({ message: "Admin access required" });
+    next();
+  };
+
+  app.get("/api/admin/stats", requireAdmin, async (_req, res) => {
+    try {
+      const stats = await storage.getStats();
+      res.json(stats);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get("/api/admin/users", requireAdmin, async (_req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if ((req.user as any).id === id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      await storage.deleteUser(id);
+      res.sendStatus(200);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.get("/api/admin/jobs", requireAdmin, async (_req, res) => {
+    try {
+      const allJobs = await storage.getAllJobs();
+      res.json(allJobs);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch jobs" });
+    }
+  });
+
+  app.delete("/api/admin/jobs/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteJob(Number(req.params.id));
+      res.sendStatus(200);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete job" });
+    }
+  });
+
+  app.get("/api/admin/books", requireAdmin, async (_req, res) => {
+    try {
+      const allBooks = await storage.getAllBooks();
+      res.json(allBooks);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch books" });
+    }
+  });
+
+  app.delete("/api/admin/books/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteBook(Number(req.params.id));
+      res.sendStatus(200);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete book" });
     }
   });
 
