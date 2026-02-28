@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import Logo from "../Assets/Logo (2).png";
+import { Footer } from "@/components/footer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,11 +174,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 bg-background py-8 animate-slide-in-from-bottom">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground">
-          <p>© 2026 EduConnect. Empowering education everywhere.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

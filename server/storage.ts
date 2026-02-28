@@ -1,5 +1,5 @@
-import { 
-  User, InsertUser, TutorProfile, InsertTutorProfile, Job, InsertJob, 
+import {
+  User, InsertUser, TutorProfile, InsertTutorProfile, Job, InsertJob,
   Application, Book, InsertBook, Review, InsertReview,
   users, tutorProfiles, jobs, applications, books, reviews
 } from "@shared/schema";
@@ -16,8 +16,9 @@ export interface IStorage {
 
   // Tutors
   createTutorProfile(profile: InsertTutorProfile): Promise<TutorProfile>;
+  updateTutorProfile(userId: number, updates: Partial<InsertTutorProfile>): Promise<TutorProfile | undefined>;
   getTutorProfile(userId: number): Promise<TutorProfile | undefined>;
-  getTutors(filters?: { subject?: string, location?: string, mode?: string }): Promise<(User & { tutorProfile: TutorProfile })[]>;
+  getTutors(filters?: { subject?: string, location?: string, mode?: string, maxBudget?: number, time?: string }): Promise<(User & { tutorProfile: TutorProfile })[]>;
 
   // Jobs
   createJob(job: InsertJob): Promise<Job>;
@@ -77,33 +78,95 @@ export class DatabaseStorage implements IStorage {
     return newProfile;
   }
 
-  async getTutorProfile(userId: number): Promise<TutorProfile | undefined> {
-    const [profile] = await db.select().from(tutorProfiles).where(eq(tutorProfiles.userId, userId));
-    return profile;
+  async updateTutorProfile(userId: number, updates: Partial<InsertTutorProfile>): Promise<TutorProfile | undefined> {
+    const [updated] = await db.update(tutorProfiles).set(updates).where(eq(tutorProfiles.userId, userId)).returning();
+    return updated;
   }
 
-  async getTutors(filters?: { subject?: string, location?: string, mode?: string }): Promise<(User & { tutorProfile: TutorProfile })[]> {
+  async getTutorProfile(userId: number): Promise<TutorProfile | undefined> {
+    try {
+      const [profile] = await db.select().from(tutorProfiles).where(eq(tutorProfiles.userId, userId));
+      return profile;
+    } catch (err: any) {
+      if (err?.code === '42703' || (err?.message || '').includes('timings')) {
+        const [profile] = await db.select({
+          id: tutorProfiles.id,
+          userId: tutorProfiles.userId,
+          subjects: tutorProfiles.subjects,
+          classes: tutorProfiles.classes,
+          experience: tutorProfiles.experience,
+          hourlyRate: tutorProfiles.hourlyRate,
+          mode: tutorProfiles.mode,
+          rating: tutorProfiles.rating,
+          createdAt: tutorProfiles.createdAt,
+        }).from(tutorProfiles).where(eq(tutorProfiles.userId, userId));
+        return profile ? { ...profile, timings: null } as any : undefined;
+      }
+      throw err;
+    }
+  }
+
+  async getTutors(filters?: { subject?: string, location?: string, mode?: string, maxBudget?: number, time?: string }): Promise<(User & { tutorProfile: TutorProfile })[]> {
     const conditions = [];
     if (filters?.location) conditions.push(ilike(users.location, `%${filters.location}%`));
-    
-    // Join users and tutor profiles
-    const results = await db.select()
-      .from(users)
-      .innerJoin(tutorProfiles, eq(users.id, tutorProfiles.userId))
-      .where(and(...conditions));
+
+    let results;
+    try {
+      // Join users and tutor profiles
+      results = await db.select()
+        .from(users)
+        .innerJoin(tutorProfiles, eq(users.id, tutorProfiles.userId))
+        .where(and(...conditions));
+    } catch (err: any) {
+      // Fallback if timings column doesn't exist
+      if (err?.code === '42703' || (err?.message || '').includes('timings')) {
+        console.warn('getTutors: falling back to explicit columns (timings missing)');
+        results = await db.select({
+          users: users,
+          tutor_profiles: {
+            id: tutorProfiles.id,
+            userId: tutorProfiles.userId,
+            subjects: tutorProfiles.subjects,
+            classes: tutorProfiles.classes,
+            experience: tutorProfiles.experience,
+            hourlyRate: tutorProfiles.hourlyRate,
+            mode: tutorProfiles.mode,
+            rating: tutorProfiles.rating,
+            createdAt: tutorProfiles.createdAt,
+          },
+        })
+          .from(users)
+          .innerJoin(tutorProfiles, eq(users.id, tutorProfiles.userId))
+          .where(and(...conditions));
+        // Add timings: null to each result
+        results = results.map((r: any) => ({
+          ...r,
+          tutor_profiles: { ...r.tutor_profiles, timings: null },
+        }));
+      } else {
+        throw err;
+      }
+    }
 
     // Filter by subject/mode in JS for MVP simplicity with JSON arrays
-    let filtered = results.map(r => ({ ...r.users, tutorProfile: r.tutor_profiles }));
-    
+    let filtered = results.map((r: any) => ({ ...r.users, tutorProfile: r.tutor_profiles }));
+
     if (filters?.subject) {
-      filtered = filtered.filter(u => 
-        u.tutorProfile.subjects?.some(s => s.toLowerCase().includes(filters.subject!.toLowerCase()))
+      filtered = filtered.filter(u =>
+        u.tutorProfile.subjects?.some((s: string) => s.toLowerCase().includes(filters.subject!.toLowerCase()))
       );
     }
     if (filters?.mode) {
       filtered = filtered.filter(u => u.tutorProfile.mode === filters.mode);
     }
-    
+    if (filters?.maxBudget != null) {
+      filtered = filtered.filter(u => (u.tutorProfile.hourlyRate ?? Infinity) <= filters.maxBudget!);
+    }
+    if (filters?.time) {
+      const q = filters.time.toLowerCase();
+      filtered = filtered.filter(u => (u.tutorProfile.timings || "").toLowerCase().includes(q));
+    }
+
     return filtered;
   }
 
@@ -118,19 +181,19 @@ export class DatabaseStorage implements IStorage {
       job: jobs,
       institution: users,
     })
-    .from(jobs)
-    .innerJoin(users, eq(jobs.institutionId, users.id))
-    .where(eq(jobs.status, "open"))
-    .orderBy(desc(jobs.createdAt));
+      .from(jobs)
+      .innerJoin(users, eq(jobs.institutionId, users.id))
+      .where(eq(jobs.status, "open"))
+      .orderBy(desc(jobs.createdAt));
 
     if (query) {
-       // Simple search
-       // baseQuery.where(ilike(jobs.title, `%${query}%`)); 
-       // Drizzle query builder complexity for conditional where, doing simple return for MVP
+      // Simple search
+      // baseQuery.where(ilike(jobs.title, `%${query}%`)); 
+      // Drizzle query builder complexity for conditional where, doing simple return for MVP
     }
 
     const results = await baseQuery;
-    
+
     if (query) {
       const q = query.toLowerCase();
       return results
@@ -157,10 +220,10 @@ export class DatabaseStorage implements IStorage {
       book: books,
       seller: users
     })
-    .from(books)
-    .innerJoin(users, eq(books.sellerId, users.id))
-    .where(eq(books.sold, false))
-    .orderBy(desc(books.createdAt));
+      .from(books)
+      .innerJoin(users, eq(books.sellerId, users.id))
+      .where(eq(books.sold, false))
+      .orderBy(desc(books.createdAt));
 
     let mapped = results.map(r => ({ ...r.book, seller: r.seller }));
 
@@ -275,7 +338,7 @@ class MemoryStorage implements IStorage {
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
     const userIndex = this.users.findIndex(u => u.id === id);
     if (userIndex === -1) return undefined;
-    
+
     const updatedUser = { ...this.users[userIndex], ...updates };
     this.users[userIndex] = updatedUser;
     return updatedUser;
@@ -288,12 +351,27 @@ class MemoryStorage implements IStorage {
     return p;
   }
 
+  async updateTutorProfile(userId: number, updates: Partial<InsertTutorProfile>): Promise<TutorProfile | undefined> {
+    const idx = this.tutors.findIndex(t => t.userId === userId);
+    if (idx === -1) return undefined;
+    this.tutors[idx] = { ...this.tutors[idx], ...updates };
+    return this.tutors[idx];
+  }
+
   async getTutorProfile(userId: number): Promise<TutorProfile | undefined> {
     return this.tutors.find(t => t.userId === userId);
   }
 
   async getTutors(filters?: { subject?: string, location?: string, mode?: string }): Promise<(User & { tutorProfile: TutorProfile })[]> {
-    return [];
+    // Basic in-memory filter over users + tutor profiles
+    const usersWithProfiles = this.users.map(u => ({ ...u, tutorProfile: this.tutors.find(t => t.userId === u.id) })).filter(x => x.tutorProfile);
+    let results: any[] = usersWithProfiles as any[];
+    if (filters?.location) results = results.filter(r => r.location && r.location.includes(filters.location));
+    if (filters?.subject) results = results.filter(r => r.tutorProfile.subjects?.some((s: string) => s.toLowerCase().includes(filters.subject!.toLowerCase())));
+    if (filters?.mode) results = results.filter(r => r.tutorProfile.mode === filters.mode);
+    if ((filters as any)?.maxBudget != null) results = results.filter(r => (r.tutorProfile.hourlyRate ?? Infinity) <= (filters as any).maxBudget);
+    if ((filters as any)?.time) results = results.filter(r => (r.tutorProfile.timings || "").toLowerCase().includes(((filters as any).time as string).toLowerCase()));
+    return results;
   }
 
   // Jobs

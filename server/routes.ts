@@ -92,7 +92,9 @@ export async function registerRoutes(
     const filters = {
       subject: req.query.subject as string,
       location: req.query.location as string,
-      mode: req.query.mode as string
+      mode: req.query.mode as string,
+      maxBudget: req.query.maxBudget ? Number(req.query.maxBudget) : undefined,
+      time: req.query.time as string | undefined
     };
     const tutors = await storage.getTutors(filters);
     res.json(tutors);
@@ -108,12 +110,80 @@ export async function registerRoutes(
 
   app.post(api.tutors.createProfile.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const profileData = insertTutorProfileSchema.omit({ userId: true }).parse(req.body);
-    const profile = await storage.createTutorProfile({
-      ...profileData,
-      userId: (req.user as any).id
-    });
-    res.status(201).json(profile);
+    try {
+      const profileData = insertTutorProfileSchema.omit({ userId: true }).parse(req.body);
+      try {
+        const profile = await storage.createTutorProfile({
+          ...profileData,
+          userId: (req.user as any).id
+        });
+        return res.status(201).json(profile);
+      } catch (dbErr: any) {
+        // Handle missing column for timings gracefully by retrying without it
+        const msg = (dbErr?.message || "").toLowerCase();
+        const isMissingTimings = msg.includes('column "timings"') || msg.includes('timings') || dbErr?.code === '42703';
+        if (isMissingTimings) {
+          console.warn('DB missing timings column, retrying without timings field');
+          // Omit timings and retry
+          const dataWithoutTimings = { ...profileData };
+          delete (dataWithoutTimings as any).timings;
+          const profile = await storage.createTutorProfile({
+            ...dataWithoutTimings,
+            userId: (req.user as any).id
+          });
+          console.log('Profile created successfully without timings');
+          return res.status(201).json(profile);
+        }
+        throw dbErr;
+      }
+    } catch (err: any) {
+      console.error("Failed to create tutor profile:", err);
+      if (err?.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid profile data', details: err.errors });
+      }
+      const message = err?.message || 'Failed to create tutor profile';
+      return res.status(500).json({ message });
+    }
+  });
+
+  // Update existing tutor profile
+  app.put(api.tutors.updateProfile.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const userId = (req.user as any).id;
+      const existing = await storage.getTutorProfile(userId);
+      if (!existing) {
+        return res.status(404).json({ message: "No tutor profile found. Create one first." });
+      }
+      const updates = insertTutorProfileSchema.omit({ userId: true }).partial().parse(req.body);
+      try {
+        const updated = await storage.updateTutorProfile(userId, updates);
+        if (!updated) {
+          return res.status(500).json({ message: "Failed to update profile" });
+        }
+        return res.status(200).json(updated);
+      } catch (dbErr: any) {
+        const msg = (dbErr?.message || "").toLowerCase();
+        const isMissingTimings = msg.includes('column "timings"') || msg.includes('timings') || dbErr?.code === '42703';
+        if (isMissingTimings) {
+          console.warn('DB missing timings column, retrying update without timings field');
+          const updatesWithoutTimings = { ...updates };
+          delete (updatesWithoutTimings as any).timings;
+          const updated = await storage.updateTutorProfile(userId, updatesWithoutTimings);
+          if (!updated) {
+            return res.status(500).json({ message: "Failed to update profile" });
+          }
+          return res.status(200).json(updated);
+        }
+        throw dbErr;
+      }
+    } catch (err: any) {
+      console.error("Failed to update tutor profile:", err);
+      if (err?.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid profile data', details: err.errors });
+      }
+      return res.status(500).json({ message: err?.message || 'Failed to update tutor profile' });
+    }
   });
 
   // Jobs

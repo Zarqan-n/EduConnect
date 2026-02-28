@@ -39,12 +39,17 @@ interface MapMarker {
     sellerEmail?: string;
     userId?: number;
     sellerId?: number;
+    mode?: string;
+    timings?: string;
   };
 }
 
 export function StudentDashboard({ title, description, showStudents = false, viewerRole = "student" }: { title?: string; description?: string; showStudents?: boolean; viewerRole?: string }) {
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
   const [distanceFilter, setDistanceFilter] = useState(2); // Default 2km
+  const [modeFilter, setModeFilter] = useState<"any" | "online" | "home" | "both">("any");
+  const [budgetFilter, setBudgetFilter] = useState<number | null>(null);
+  const [timeFilter, setTimeFilter] = useState<string>("");
   const [mapMarkers, setMapMarkers] = useState<MapMarker[]>([]);
   const [isLoadingMarkers, setIsLoadingMarkers] = useState(false);
 
@@ -53,43 +58,65 @@ export function StudentDashboard({ title, description, showStudents = false, vie
   const { data: jobs } = useJobs();
   const { data: students } = useUsersByRole("student");
 
-  // Generate sample mock data if API doesn't return coordinates
-  // In production, coordinates should come from the API
+  // Filter real data by location match and generate map markers
   useEffect(() => {
-    if (!selectedLocation) return;
+    if (!selectedLocation) {
+      setMapMarkers([]);
+      return;
+    }
 
     setIsLoadingMarkers(true);
 
-    // Simulate API delay
     const timer = setTimeout(() => {
       const markers: MapMarker[] = [];
+      const locationQuery = selectedLocation.displayName.toLowerCase();
 
-      // Add tutors (or students when showStudents is true)
+      // Helper: deterministic offset based on ID to spread markers on map
+      const offsetForId = (id: number, scale: number = 0.02) => {
+        const angle = ((id * 137.508) % 360) * (Math.PI / 180);
+        const r = scale * (0.3 + ((id * 7) % 10) / 10);
+        return { lat: r * Math.cos(angle), lon: r * Math.sin(angle) };
+      };
+
+      // Add tutors
       if ((viewerRole === "student" || viewerRole === "seller" || viewerRole === "institution") && tutors && Array.isArray(tutors)) {
-        // For viewers that should see tutors
-        tutors.slice(0, 3).forEach((tutor: any, idx: number) => {
-          // Generate mock coordinates near the selected location
-          const offsetLat = (Math.random() - 0.5) * 0.05; // ~5km variation
-          const offsetLon = (Math.random() - 0.5) * 0.05;
-          const lat = selectedLocation.lat + offsetLat;
-          const lon = selectedLocation.lon + offsetLon;
+        tutors.forEach((tutor: any) => {
+          const tutorLocation = (tutor.location || "").toLowerCase();
+          if (!tutorLocation.includes(locationQuery) && !locationQuery.includes(tutorLocation)) return;
 
-          // Calculate approximate distance
+          // Apply mode filter
+          if (modeFilter !== "any") {
+            const tutorMode = tutor.tutorProfile?.mode || "online";
+            if (modeFilter !== "both" && tutorMode !== modeFilter) return;
+          }
+          // Apply budget filter
+          if (budgetFilter != null && (tutor.tutorProfile?.hourlyRate ?? Infinity) > budgetFilter) return;
+          // Apply time filter
+          if (timeFilter && timeFilter.trim() !== "") {
+            const timings = (tutor.tutorProfile?.timings || "").toLowerCase();
+            if (!timings.includes(timeFilter.toLowerCase())) return;
+          }
+
+          const off = offsetForId(tutor.id || 0);
+          const lat = selectedLocation.lat + off.lat;
+          const lon = selectedLocation.lon + off.lon;
           const distance = calculateDistance(selectedLocation.lat, selectedLocation.lon, lat, lon);
 
           markers.push({
-            id: tutor.id || idx,
-            name: tutor.name || `Tutor ${idx + 1}`,
+            id: tutor.id,
+            name: tutor.name || "Tutor",
             type: "tutor",
             lat,
             lon,
             distance,
             details: {
-              rate: tutor.hourlyRate || 500,
-              subjects: tutor.subjects || ["Math", "Science"],
-              rating: tutor.rating ? tutor.rating / 10 : 4.5,
+              rate: tutor.tutorProfile?.hourlyRate || 500,
+              subjects: tutor.tutorProfile?.subjects || [],
+              rating: tutor.tutorProfile?.rating ? tutor.tutorProfile.rating / 10 : 4.5,
               contactEmail: tutor.email,
               userId: tutor.id,
+              mode: tutor.tutorProfile?.mode || "online",
+              timings: tutor.tutorProfile?.timings || "",
             },
           });
         });
@@ -97,16 +124,18 @@ export function StudentDashboard({ title, description, showStudents = false, vie
 
       // Add book sellers
       if ((viewerRole === "student" || viewerRole === "tutor" || viewerRole === "seller") && books && Array.isArray(books)) {
-        books.slice(0, 2).forEach((book: any, idx: number) => {
-          const offsetLat = (Math.random() - 0.5) * 0.05;
-          const offsetLon = (Math.random() - 0.5) * 0.05;
-          const lat = selectedLocation.lat + offsetLat;
-          const lon = selectedLocation.lon + offsetLon;
+        books.forEach((book: any) => {
+          const bookLocation = (book.location || book.seller?.location || "").toLowerCase();
+          if (!bookLocation.includes(locationQuery) && !locationQuery.includes(bookLocation)) return;
+
+          const off = offsetForId(1000 + (book.id || 0));
+          const lat = selectedLocation.lat + off.lat;
+          const lon = selectedLocation.lon + off.lon;
           const distance = calculateDistance(selectedLocation.lat, selectedLocation.lon, lat, lon);
 
           markers.push({
-            id: 1000 + (book.id || idx),
-            name: book.title || `Book Seller ${idx + 1}`,
+            id: 1000 + (book.id || 0),
+            name: book.title || "Book",
             type: "seller",
             lat,
             lon,
@@ -123,16 +152,18 @@ export function StudentDashboard({ title, description, showStudents = false, vie
 
       // Add institutions/jobs
       if ((viewerRole === "tutor" || viewerRole === "student") && jobs && Array.isArray(jobs)) {
-        jobs.slice(0, 2).forEach((job: any, idx: number) => {
-          const offsetLat = (Math.random() - 0.5) * 0.05;
-          const offsetLon = (Math.random() - 0.5) * 0.05;
-          const lat = selectedLocation.lat + offsetLat;
-          const lon = selectedLocation.lon + offsetLon;
+        jobs.forEach((job: any) => {
+          const jobLocation = (job.location || job.institution?.location || "").toLowerCase();
+          if (!jobLocation.includes(locationQuery) && !locationQuery.includes(jobLocation)) return;
+
+          const off = offsetForId(2000 + (job.id || 0));
+          const lat = selectedLocation.lat + off.lat;
+          const lon = selectedLocation.lon + off.lon;
           const distance = calculateDistance(selectedLocation.lat, selectedLocation.lon, lat, lon);
 
           markers.push({
-            id: 2000 + (job.id || idx),
-            name: job.title || `Institution ${idx + 1}`,
+            id: 2000 + (job.id || 0),
+            name: job.title || "Job",
             type: "institution",
             lat,
             lon,
@@ -144,18 +175,20 @@ export function StudentDashboard({ title, description, showStudents = false, vie
         });
       }
 
-      // Add students for viewers that should see students (e.g., tutor, seller)
+      // Add students
       if ((viewerRole === "tutor" || viewerRole === "seller") && students && Array.isArray(students)) {
-        students.slice(0, 4).forEach((s: any, idx: number) => {
-          const offsetLat = (Math.random() - 0.5) * 0.04;
-          const offsetLon = (Math.random() - 0.5) * 0.04;
-          const lat = selectedLocation.lat + offsetLat;
-          const lon = selectedLocation.lon + offsetLon;
+        students.forEach((s: any) => {
+          const studentLocation = (s.location || "").toLowerCase();
+          if (!studentLocation.includes(locationQuery) && !locationQuery.includes(studentLocation)) return;
+
+          const off = offsetForId(3000 + (s.id || 0));
+          const lat = selectedLocation.lat + off.lat;
+          const lon = selectedLocation.lon + off.lon;
           const distance = calculateDistance(selectedLocation.lat, selectedLocation.lon, lat, lon);
 
           markers.push({
-            id: 3000 + (s.id || idx),
-            name: s.name || `Student ${idx + 1}`,
+            id: 3000 + (s.id || 0),
+            name: s.name || "Student",
             type: "student",
             lat,
             lon,
@@ -171,10 +204,10 @@ export function StudentDashboard({ title, description, showStudents = false, vie
 
       setMapMarkers(markers);
       setIsLoadingMarkers(false);
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [selectedLocation, tutors, books, jobs]);
+  }, [selectedLocation, tutors, books, jobs, students, modeFilter, budgetFilter, timeFilter]);
 
   // Haversine formula to calculate distance between two coordinates
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -195,6 +228,22 @@ export function StudentDashboard({ title, description, showStudents = false, vie
     console.log("Clicked marker:", marker);
     // You can navigate to detail page or show more info here
   };
+
+  const filteredMarkers = mapMarkers.filter(m => {
+    if (m.distance > distanceFilter) return false;
+    if (budgetFilter != null && (m.details?.rate ?? Infinity) > budgetFilter) return false;
+    if (modeFilter !== "any") {
+      const mode = (m.details as any)?.mode || "online";
+      if (modeFilter === "both") {
+        // allow either
+      } else if (mode !== modeFilter) return false;
+    }
+    if (timeFilter && timeFilter.trim() !== "") {
+      const timings = ((m.details as any)?.timings || "").toLowerCase();
+      if (!timings.includes(timeFilter.toLowerCase())) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -259,6 +308,28 @@ export function StudentDashboard({ title, description, showStudents = false, vie
                 </div>
               </div>
             )}
+            {/* Additional Filters: Mode, Budget, Time */}
+            {selectedLocation && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-base">Mode</Label>
+                  <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value as any)} className="w-full p-2 rounded-md border">
+                    <option value="any">Any</option>
+                    <option value="online">Online</option>
+                    <option value="home">In-person</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-base">Max Budget (₹/Month)</Label>
+                  <Input type="number" value={budgetFilter ?? ""} onChange={(e) => setBudgetFilter(e.target.value ? parseInt(e.target.value) : null)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-base">Preferred Time</Label>
+                  <Input placeholder="e.g. Morning, Evening" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)} />
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -267,7 +338,7 @@ export function StudentDashboard({ title, description, showStudents = false, vie
       {selectedLocation ? (
         <MapView
           center={[selectedLocation.lat, selectedLocation.lon]}
-          markers={mapMarkers}
+          markers={filteredMarkers}
           distanceFilter={distanceFilter}
           onMarkerClick={handleMarkerClick}
           loading={isLoadingMarkers}
@@ -289,7 +360,24 @@ export function StudentDashboard({ title, description, showStudents = false, vie
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Results</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {mapMarkers.filter(m => m.distance <= distanceFilter).map(marker => (
+            {mapMarkers.filter(m => {
+              if (m.distance > distanceFilter) return false;
+              // Budget filter
+              if (budgetFilter != null && (m.details?.rate ?? Infinity) > budgetFilter) return false;
+              // Mode filter
+              if (modeFilter !== "any") {
+                const mode = (m.details as any)?.mode || "online";
+                if (modeFilter === "both") {
+                  // allow either
+                } else if (mode !== modeFilter) return false;
+              }
+              // Time filter (simple substring match)
+              if (timeFilter && timeFilter.trim() !== "") {
+                const timings = ((m.details as any)?.timings || "").toLowerCase();
+                if (!timings.includes(timeFilter.toLowerCase())) return false;
+              }
+              return true;
+            }).map(marker => (
               <Card key={`${marker.type}-${marker.id}`}>
                 <CardContent>
                   <div className="flex pt-6 justify-between">
@@ -302,13 +390,19 @@ export function StudentDashboard({ title, description, showStudents = false, vie
                       {marker.details?.rate && (
                         <p className="text-xs mt-1">Rate: ₹{marker.details.rate}/Month</p>
                       )}
+                      {marker.details?.mode && (
+                        <p className="text-xs mt-1">Mode: {marker.details.mode === 'home' ? 'In-person' : marker.details.mode}</p>
+                      )}
+                      {marker.details && (marker.details as any).timings && (
+                        <p className="text-xs mt-1">Timings: {(marker.details as any).timings}</p>
+                      )}
                       {marker.details?.price && (
                         <p className="text-xs mt-1">Price: ₹{marker.details.price}</p>
                       )}
                     </div>
                     <div className="flex items-center">
                       <button
-                        
+
                         className="border rounded p-1.5 bg-blue-300"
                         onClick={() => {
                           const email = (marker.details as any)?.sellerEmail || (marker.details as any)?.contactEmail;

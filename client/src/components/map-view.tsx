@@ -23,6 +23,8 @@ interface MapMarker {
     books?: number;
     jobs?: number;
     rating?: number;
+      mode?: string;
+      timings?: string;
   };
 }
 
@@ -201,6 +203,12 @@ export function MapView({
                             <p className="flex items-center gap-1">
                               ₹{marker.details.price}
                             </p>
+                          )}
+                          {(marker.details as any).mode && (
+                            <p className="text-xs">Mode: {(marker.details as any).mode === 'home' ? 'In-person' : (marker.details as any).mode}</p>
+                          )}
+                          {(marker.details as any).timings && (
+                            <p className="text-xs">Timings: {(marker.details as any).timings}</p>
                           )}
                         </div>
                       )}

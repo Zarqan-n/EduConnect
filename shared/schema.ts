@@ -31,6 +31,8 @@ export const tutorProfiles = pgTable("tutor_profiles", {
   experience: integer("experience").default(0), // Years
   hourlyRate: integer("hourly_rate").default(0),
   mode: text("mode"), // "online", "home", "both"
+  // Comma-separated or free-text availability description (e.g. "Morning,Evening" or "Mon-Fri 6-9pm")
+  timings: text("timings"),
   rating: integer("rating").default(0), // Average rating (stored as int 0-50 for 0.0-5.0 or just float if supported well, sticking to simple logic for now)
   createdAt: timestamp("created_at").defaultNow(),
 });

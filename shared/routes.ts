@@ -70,6 +70,8 @@ export const api = {
         subject: z.string().optional(),
         location: z.string().optional(),
         mode: z.string().optional(),
+        maxBudget: z.number().optional(),
+        time: z.string().optional(),
       }).optional(),
       responses: {
         200: z.array(z.custom<typeof users.$inferSelect & { tutorProfile: typeof tutorProfiles.$inferSelect }>()),
@@ -90,6 +92,16 @@ export const api = {
       responses: {
         201: z.custom<typeof tutorProfiles.$inferSelect>(),
         400: errorSchemas.validation,
+      },
+    },
+    updateProfile: {
+      method: 'PUT' as const,
+      path: '/api/tutors/profile' as const,
+      input: insertTutorProfileSchema.omit({ userId: true }).partial(),
+      responses: {
+        200: z.custom<typeof tutorProfiles.$inferSelect>(),
+        400: errorSchemas.validation,
+        404: errorSchemas.notFound,
       },
     }
   },

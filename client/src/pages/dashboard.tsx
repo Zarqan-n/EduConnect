@@ -4,7 +4,7 @@ import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useTutors, useCreateTutorProfile } from "@/hooks/use-tutors";
+import { useTutors, useCreateTutorProfile, useUpdateTutorProfile, useTutorProfile } from "@/hooks/use-tutors";
 import { useJobs, useCreateJob } from "@/hooks/use-jobs";
 import { useBooks, useCreateBook } from "@/hooks/use-books";
 import { useForm } from "react-hook-form";
@@ -15,13 +15,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Loader2, Plus, UserCircle, Briefcase, Book, Settings } from "lucide-react";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SettingsModal } from "@/components/settings-modal";
 import { StudentDashboard } from "@/components/student-dashboard";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  
+
   if (!user) return <div>Access Denied</div>;
 
   return (
@@ -150,14 +150,14 @@ function StatCard({ title, value, icon: Icon, color = "blue" }: any) {
     orange: "bg-orange-100 text-orange-700",
     purple: "bg-purple-100 text-purple-700",
   };
-  
+
   const bgClasses = {
     blue: "bg-gradient-to-br from-blue-50 to-indigo-50/30 border-blue-200",
     green: "bg-gradient-to-br from-green-50 to-emerald-50/30 border-green-200",
     orange: "bg-gradient-to-br from-orange-50 to-amber-50/30 border-orange-200",
     purple: "bg-gradient-to-br from-purple-50 to-violet-50/30 border-purple-200",
   };
-  
+
   const textClasses = {
     blue: "text-blue-900",
     green: "text-green-900",
@@ -181,28 +181,67 @@ function StatCard({ title, value, icon: Icon, color = "blue" }: any) {
 // === Action Components for each Role ===
 
 function TeacherActions() {
+  const { user } = useAuth();
   const createProfile = useCreateTutorProfile();
-  // Simple form state for MVP - in real app use react-hook-form
+  const updateProfile = useUpdateTutorProfile();
+  const { data: existingProfile, isLoading: profileLoading } = useTutorProfile(user?.id);
+
   const [rate, setRate] = useState("3000");
   const [subjects, setSubjects] = useState("Math, Science");
+  const [mode, setMode] = useState("online");
+  const [timings, setTimings] = useState("10:00 AM to 8:00 PM");
+  const [initialized, setInitialized] = useState(false);
+
+  // Pre-fill form when existing profile loads
+  useEffect(() => {
+    if (existingProfile && !initialized) {
+      setRate(String(existingProfile.hourlyRate || 3000));
+      setSubjects((existingProfile.subjects || []).join(", "));
+      setMode(existingProfile.mode || "online");
+      setTimings(existingProfile.timings || "10:00 AM to 8:00 PM");
+      setInitialized(true);
+    }
+  }, [existingProfile, initialized]);
+
+  const hasProfile = !!existingProfile;
+  const isPending = createProfile.isPending || updateProfile.isPending;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createProfile.mutate({
+    const data = {
       hourlyRate: parseInt(rate),
       subjects: subjects.split(",").map(s => s.trim()),
       experience: 5,
-      mode: "online",
-      rating: 50, // Initial rating
-      classes: ["Grade 10", "Grade 11"]
-    });
+      mode,
+      timings,
+      rating: existingProfile?.rating ?? 50,
+      classes: existingProfile?.classes || ["Grade 10", "Grade 11"]
+    };
+
+    if (hasProfile) {
+      updateProfile.mutate(data);
+    } else {
+      createProfile.mutate(data);
+    }
   };
+
+  if (profileLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-blue-50/50 to-indigo-50/30 border-blue-200 border-l-4 border-l-blue-500">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-gradient-to-br from-blue-50/50 to-indigo-50/30 border-blue-200 border-l-4 border-l-blue-500">
       <CardHeader>
         <CardTitle className="text-blue-900">Tutor Profile</CardTitle>
-        <CardDescription className="text-blue-800">Manage your public tutor listing.</CardDescription>
+        <CardDescription className="text-blue-800">
+          {hasProfile ? "Update your public tutor listing." : "Create your public tutor listing."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
@@ -214,9 +253,23 @@ function TeacherActions() {
             <Label className="text-blue-900 font-semibold">Subjects (comma separated)</Label>
             <Input value={subjects} onChange={e => setSubjects(e.target.value)} className="focus-glow border-blue-200" />
           </div>
-          <Button disabled={createProfile.isPending} className="bg-blue-600 hover:bg-blue-700 text-white">
-            {createProfile.isPending && <Loader2 className="mr-2 h-4 w-4 spin-smooth" />}
-            Update Profile
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-blue-900 font-semibold">Mode</Label>
+              <select value={mode} onChange={e => setMode(e.target.value)} className="w-full p-2 rounded-md border">
+                <option value="online">Online</option>
+                <option value="home">In-person</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-blue-900 font-semibold">Timings (e.g. 10:00 AM to 8:00 PM)</Label>
+              <Input value={timings} onChange={e => setTimings(e.target.value)} placeholder="10:00 AM to 8:00 PM" className="focus-glow border-blue-200" />
+            </div>
+          </div>
+          <Button disabled={isPending} className="bg-blue-600 hover:bg-blue-700 text-white">
+            {isPending && <Loader2 className="mr-2 h-4 w-4 spin-smooth" />}
+            {hasProfile ? "Update Profile" : "Create Profile"}
           </Button>
         </form>
       </CardContent>

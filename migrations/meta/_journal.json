@@ -8,6 +8,13 @@
       "when": 1771084487635,
       "tag": "0000_brief_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1740672000000,
+      "tag": "0001_add_tutor_timings",
+      "breakpoints": true
     }
   ]
 }

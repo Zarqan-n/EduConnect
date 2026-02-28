@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, GraduationCap, Briefcase, BookOpen, Search } from "lucide-react";
 import { LayoutShell } from "@/components/layout-shell";
 import { StudentDashboard } from "@/components/student-dashboard";
+import { HowItWorks } from "@/components/how-it-works";
 
 export default function Home() {
   const container = {
@@ -100,6 +101,9 @@ export default function Home() {
           bg="bg-green-100 dark:bg-green-900/20"
         />
       </div>
+
+      {/* How It Works Section */}
+      <HowItWorks />
 
       {/* Map Preview / Quick Search */}
       <div className="py-12">

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, MapPin, Search, Star, BookOpen } from "lucide-react";
+import { Loader2, MapPin, Search, Star, BookOpen, Clock } from "lucide-react";
 
 export default function TutorsPage() {
   const [filters, setFilters] = useState({ subject: "", location: "" });
@@ -105,13 +105,13 @@ function TutorCard({ user }: { user: any }) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="p-6 flex-1">
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground line-clamp-3">
             {user.bio || "No bio available."}
           </p>
-          
+
           <div className="flex flex-wrap gap-2">
             {profile.subjects?.slice(0, 3).map((subject: string) => (
               <Badge key={subject} variant="secondary" className="font-medium bg-blue-100 text-blue-800">
@@ -122,9 +122,21 @@ function TutorCard({ user }: { user: any }) {
               <Badge variant="outline" className="border-blue-300 text-blue-700">+{profile.subjects.length - 3}</Badge>
             )}
           </div>
+
+          {profile.mode && (
+            <div className="flex items-center gap-1 text-xs text-blue-700">
+              <span className="font-semibold">Mode:</span> {profile.mode === 'home' ? 'In-person' : profile.mode === 'both' ? 'Online & In-person' : 'Online'}
+            </div>
+          )}
+          {profile.timings && (
+            <div className="flex items-center gap-1 text-xs text-blue-700">
+              <Clock className="w-3 h-3" />
+              <span className="font-semibold">Timings:</span> {profile.timings}
+            </div>
+          )}
         </div>
       </CardContent>
-      
+
       <CardFooter className="p-4 bg-gradient-to-r from-blue-50/50 to-transparent border-t border-blue-200 gap-2 flex justify-between items-center flex-wrap">
         <div className="flex items-center text-sm text-blue-700 gap-1 font-medium">
           <MapPin className="w-3 h-3" />
