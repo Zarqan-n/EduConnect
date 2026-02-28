@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,8 @@ export function StudentDashboard({ title, description, showStudents = false, vie
   const [timeFilter, setTimeFilter] = useState<string>("");
   const [mapMarkers, setMapMarkers] = useState<MapMarker[]>([]);
   const [isLoadingMarkers, setIsLoadingMarkers] = useState(false);
+  const [highlightedMarkerId, setHighlightedMarkerId] = useState<string | null>(null);
+  const resultCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const { data: tutors } = useTutors();
   const { data: books } = useBooks();
@@ -70,6 +72,21 @@ export function StudentDashboard({ title, description, showStudents = false, vie
     const timer = setTimeout(() => {
       const markers: MapMarker[] = [];
       const locationQuery = selectedLocation.displayName.toLowerCase();
+      const fullAddress = (selectedLocation.address || selectedLocation.displayName).toLowerCase();
+
+      // Broad location matching: checks displayName, full address, and word overlap
+      const locationMatches = (itemLocation: string): boolean => {
+        if (!itemLocation) return false;
+        const loc = itemLocation.toLowerCase();
+        // Direct substring match either way
+        if (loc.includes(locationQuery) || locationQuery.includes(loc)) return true;
+        // Match item location against full Nominatim address
+        if (fullAddress.includes(loc) || loc.includes(fullAddress)) return true;
+        // Word-level overlap: split both into words and check for common words (skip short words)
+        const searchWords = fullAddress.split(/[\s,]+/).filter(w => w.length > 2);
+        const itemWords = loc.split(/[\s,]+/).filter(w => w.length > 2);
+        return searchWords.some(sw => itemWords.some(iw => sw.includes(iw) || iw.includes(sw)));
+      };
 
       // Helper: deterministic offset based on ID to spread markers on map
       const offsetForId = (id: number, scale: number = 0.02) => {
@@ -81,8 +98,8 @@ export function StudentDashboard({ title, description, showStudents = false, vie
       // Add tutors
       if ((viewerRole === "student" || viewerRole === "seller" || viewerRole === "institution") && tutors && Array.isArray(tutors)) {
         tutors.forEach((tutor: any) => {
-          const tutorLocation = (tutor.location || "").toLowerCase();
-          if (!tutorLocation.includes(locationQuery) && !locationQuery.includes(tutorLocation)) return;
+          const tutorLocation = (tutor.location || "");
+          if (!locationMatches(tutorLocation)) return;
 
           // Apply mode filter
           if (modeFilter !== "any") {
@@ -125,8 +142,8 @@ export function StudentDashboard({ title, description, showStudents = false, vie
       // Add book sellers
       if ((viewerRole === "student" || viewerRole === "tutor" || viewerRole === "seller") && books && Array.isArray(books)) {
         books.forEach((book: any) => {
-          const bookLocation = (book.location || book.seller?.location || "").toLowerCase();
-          if (!bookLocation.includes(locationQuery) && !locationQuery.includes(bookLocation)) return;
+          const bookLocation = (book.location || book.seller?.location || "");
+          if (!locationMatches(bookLocation)) return;
 
           const off = offsetForId(1000 + (book.id || 0));
           const lat = selectedLocation.lat + off.lat;
@@ -153,8 +170,8 @@ export function StudentDashboard({ title, description, showStudents = false, vie
       // Add institutions/jobs
       if ((viewerRole === "tutor" || viewerRole === "student") && jobs && Array.isArray(jobs)) {
         jobs.forEach((job: any) => {
-          const jobLocation = (job.location || job.institution?.location || "").toLowerCase();
-          if (!jobLocation.includes(locationQuery) && !locationQuery.includes(jobLocation)) return;
+          const jobLocation = (job.location || job.institution?.location || "");
+          if (!locationMatches(jobLocation)) return;
 
           const off = offsetForId(2000 + (job.id || 0));
           const lat = selectedLocation.lat + off.lat;
@@ -178,8 +195,8 @@ export function StudentDashboard({ title, description, showStudents = false, vie
       // Add students
       if ((viewerRole === "tutor" || viewerRole === "seller") && students && Array.isArray(students)) {
         students.forEach((s: any) => {
-          const studentLocation = (s.location || "").toLowerCase();
-          if (!studentLocation.includes(locationQuery) && !locationQuery.includes(studentLocation)) return;
+          const studentLocation = (s.location || "");
+          if (!locationMatches(studentLocation)) return;
 
           const off = offsetForId(3000 + (s.id || 0));
           const lat = selectedLocation.lat + off.lat;
@@ -225,8 +242,15 @@ export function StudentDashboard({ title, description, showStudents = false, vie
   };
 
   const handleMarkerClick = (marker: MapMarker) => {
-    console.log("Clicked marker:", marker);
-    // You can navigate to detail page or show more info here
+    const markerId = `${marker.type}-${marker.id}`;
+    setHighlightedMarkerId(markerId);
+    // Scroll to the corresponding result card
+    const cardEl = resultCardRefs.current[markerId];
+    if (cardEl) {
+      cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    // Auto-clear highlight after 3 seconds
+    setTimeout(() => setHighlightedMarkerId(null), 3000);
   };
 
   const filteredMarkers = mapMarkers.filter(m => {
@@ -377,56 +401,66 @@ export function StudentDashboard({ title, description, showStudents = false, vie
                 if (!timings.includes(timeFilter.toLowerCase())) return false;
               }
               return true;
-            }).map(marker => (
-              <Card key={`${marker.type}-${marker.id}`}>
-                <CardContent>
-                  <div className="flex pt-6 justify-between">
-                    <div>
-                      <h4 className="font-medium">{marker.name}</h4>
-                      <p className="text-xs text-muted-foreground">{marker.type} • {marker.distance.toFixed(1)} km</p>
-                      {marker.details?.subjects && (
-                        <p className="text-xs mt-1">Subjects: {marker.details.subjects.join(", ")}</p>
-                      )}
-                      {marker.details?.rate && (
-                        <p className="text-xs mt-1">Rate: ₹{marker.details.rate}/Month</p>
-                      )}
-                      {marker.details?.mode && (
-                        <p className="text-xs mt-1">Mode: {marker.details.mode === 'home' ? 'In-person' : marker.details.mode}</p>
-                      )}
-                      {marker.details && (marker.details as any).timings && (
-                        <p className="text-xs mt-1">Timings: {(marker.details as any).timings}</p>
-                      )}
-                      {marker.details?.price && (
-                        <p className="text-xs mt-1">Price: ₹{marker.details.price}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center">
-                      <button
-
-                        className="border rounded p-1.5 bg-blue-300"
-                        onClick={() => {
-                          const email = (marker.details as any)?.sellerEmail || (marker.details as any)?.contactEmail;
-                          if (email) {
-                            const subject = encodeURIComponent(`Inquiry about ${marker.name}`);
-                            window.location.href = `mailto:${email}?subject=${subject}`;
-                          } else {
-                            // fallback: navigate to profile if userId available
-                            const uid = (marker.details as any)?.userId || (marker.details as any)?.sellerId;
-                            if (uid) {
-                              window.location.href = `/profile/${uid}`;
+            }).map(marker => {
+              const markerId = `${marker.type}-${marker.id}`;
+              const isHighlighted = highlightedMarkerId === markerId;
+              return (
+                <Card
+                  key={markerId}
+                  ref={(el) => { resultCardRefs.current[markerId] = el; }}
+                  className={`transition-all duration-500 ${isHighlighted
+                    ? "ring-2 ring-blue-500 shadow-lg shadow-blue-200 scale-[1.02] bg-blue-50/50"
+                    : ""
+                    }`}
+                >
+                  <CardContent>
+                    <div className="flex pt-6 justify-between">
+                      <div>
+                        <h4 className="font-medium">{marker.name}</h4>
+                        <p className="text-xs text-muted-foreground">{marker.type} • {marker.distance.toFixed(1)} km</p>
+                        {marker.details?.subjects && (
+                          <p className="text-xs mt-1">Subjects: {marker.details.subjects.join(", ")}</p>
+                        )}
+                        {marker.details?.rate && (
+                          <p className="text-xs mt-1">Rate: ₹{marker.details.rate}/Month</p>
+                        )}
+                        {marker.details?.mode && (
+                          <p className="text-xs mt-1">Mode: {marker.details.mode === 'home' ? 'In-person' : marker.details.mode}</p>
+                        )}
+                        {marker.details && (marker.details as any).timings && (
+                          <p className="text-xs mt-1">Timings: {(marker.details as any).timings}</p>
+                        )}
+                        {marker.details?.price && (
+                          <p className="text-xs mt-1">Price: ₹{marker.details.price}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center">
+                        <button
+                          className="border rounded p-1.5 bg-blue-300"
+                          onClick={() => {
+                            const email = (marker.details as any)?.sellerEmail || (marker.details as any)?.contactEmail;
+                            if (email) {
+                              const subject = encodeURIComponent(`Inquiry about ${marker.name}`);
+                              window.location.href = `mailto:${email}?subject=${subject}`;
                             } else {
-                              alert("No contact information available.");
+                              // fallback: navigate to profile if userId available
+                              const uid = (marker.details as any)?.userId || (marker.details as any)?.sellerId;
+                              if (uid) {
+                                window.location.href = `/profile/${uid}`;
+                              } else {
+                                alert("No contact information available.");
+                              }
                             }
-                          }
-                        }}
-                      >
-                        Contact
-                      </button>
+                          }}
+                        >
+                          Contact
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

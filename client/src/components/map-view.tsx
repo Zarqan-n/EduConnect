@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Users, BookOpen, Building2, Star, DollarSign } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
@@ -23,8 +22,8 @@ interface MapMarker {
     books?: number;
     jobs?: number;
     rating?: number;
-      mode?: string;
-      timings?: string;
+    mode?: string;
+    timings?: string;
   };
 }
 
@@ -149,7 +148,7 @@ export function MapView({
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="&copy; OpenStreetMap contributors"
               />
-              
+
               {/* Circle showing search radius */}
               <Circle
                 center={center as LatLngExpression}
@@ -169,6 +168,9 @@ export function MapView({
                   key={`${marker.type}-${marker.id}`}
                   position={[marker.lat, marker.lon] as LatLngExpression}
                   icon={getMarkerIcon(marker.type)}
+                  eventHandlers={{
+                    click: () => onMarkerClick?.(marker),
+                  }}
                 >
                   <Popup>
                     <div className="w-48 space-y-2">
@@ -185,7 +187,7 @@ export function MapView({
                         <div className="text-xs space-y-1 bg-secondary/30 p-2 rounded">
                           {marker.details.rate && (
                             <p className="flex items-center gap-1">
-                             ₹{marker.details.rate}/Month
+                              ₹{marker.details.rate}/Month
                             </p>
                           )}
                           {marker.details.subjects && marker.details.subjects.length > 0 && (
@@ -212,13 +214,6 @@ export function MapView({
                           )}
                         </div>
                       )}
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => onMarkerClick?.(marker)}
-                      >
-                        View Details
-                      </Button>
                     </div>
                   </Popup>
                 </Marker>
