@@ -9,6 +9,7 @@ import { hashPassword } from "./auth";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { initializeDatabase } from "./init-db";
 
 const app = express();
 const httpServer = createServer(app);
@@ -85,6 +86,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  try {
+    // Initialize database and run migrations first
+    await initializeDatabase();
+  } catch (error) {
+    console.error("Fatal: Database initialization failed:", error);
+    process.exit(1);
+  }
+
   await registerRoutes(httpServer, app);
   await ensureAdminUser();
 
