@@ -12,18 +12,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Settings, UserCircle, Briefcase, Book, Globe, MapPin as MapPinIcon, Loader2 } from "lucide-react";
-import { useState, useEffect, Suspense, lazy } from "react";
-import { StudentDashboard } from "@/components/student-dashboard";
+import { useState, useEffect } from "react";
+import { MapContainer } from "@/components/map-container";
+import { useTutors } from "@/hooks/use-tutors";
+import { useBooks } from "@/hooks/use-books";
 import { DashboardPageSkeleton, StatCardSkeleton } from "@/components/dashboard-skeletons";
 
-// Lazy load heavy components
-const LazyStudentDashboard = lazy(() =>
-  import("@/components/student-dashboard").then(mod => ({ default: mod.StudentDashboard }))
-);
+
 
 export default function InstitutionDashboardPage() {
   const { user } = useAuth();
   const [isScrollSmooth, setIsScrollSmooth] = useState(false);
+  const { data: tutors = [] } = useTutors();
+  const { data: books = [] } = useBooks();
 
   useEffect(() => {
     // Enable smooth scrolling
@@ -82,6 +83,17 @@ export default function InstitutionDashboardPage() {
             </div>
           </CardContent>
         </Card>
+        {/* Map Section - Show nearby teachers and books */}
+        <div className="mt-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2"><Briefcase className="w-6 h-6" /> Explore Nearby</h2>
+          <MapContainer
+            userRole="institution"
+            tutors={tutors}
+            books={books}
+            jobs={[]}
+            students={[]}
+          />
+        </div>
         <InstitutionActions />
       </div>
     </LayoutShell>

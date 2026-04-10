@@ -95,8 +95,8 @@ export function LocationSearch({ onLocationSelect, loading }: LocationSearchProp
   };
 
   return (
-    <div className="relative w-full space-y-2">
-      <div className="flex gap-2">
+    <div className="w-full space-y-2 relative">
+      <div className="flex gap-2 relative z-20">
         <div className="flex-1 relative">
           <Input
             placeholder="Search location (e.g., Mumbai, Delhi, Bangalore)..."
@@ -123,7 +123,7 @@ export function LocationSearch({ onLocationSelect, loading }: LocationSearchProp
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <Card className="absolute top-full left-0 right-0 z-50 mt-1 max-h-80 overflow-y-auto bg-background border border-border shadow-lg">
+        <Card className="absolute top-14 left-0 right-0 z-50 max-h-80 overflow-y-auto bg-background border border-border shadow-xl rounded-lg">
           <div className="space-y-0">
             {suggestions.map((suggestion, idx) => (
               <button

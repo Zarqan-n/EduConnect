@@ -9,21 +9,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Settings, UserCircle, Briefcase, Book, Loader2, BarChart3, GraduationCap } from "lucide-react";
 import { useState, useEffect, Suspense, lazy } from "react";
-import { StudentDashboard } from "@/components/student-dashboard";
+import { MapContainer } from "@/components/map-container";
 import { TeacherAnalyticsDashboard } from "@/components/teacher-analytics";
+import { useTutors } from "@/hooks/use-tutors";
+import { useBooks } from "@/hooks/use-books";
+import { useJobs } from "@/hooks/use-jobs";
+import { useUsersByRole } from "@/hooks/use-users";
 import { FormCardSkeleton, AnalyticsSkeleton, DashboardPageSkeleton, StatCardSkeleton } from "@/components/dashboard-skeletons";
 
 // Lazy load heavy components
 const LazyTeacherAnalytics = lazy(() =>
   import("@/components/teacher-analytics").then(mod => ({ default: mod.TeacherAnalyticsDashboard }))
 );
-const LazyStudentDashboard = lazy(() =>
-  import("@/components/student-dashboard").then(mod => ({ default: mod.StudentDashboard }))
-);
 
 export default function TeacherDashboardPage() {
   const { user } = useAuth();
   const [isScrollSmooth, setIsScrollSmooth] = useState(false);
+  const { data: students = [] } = useUsersByRole("student");
+  const { data: jobs = [] } = useJobs();
+  const { data: books = [] } = useBooks();
 
   useEffect(() => {
     // Enable smooth scrolling
@@ -105,12 +109,16 @@ export default function TeacherDashboardPage() {
           <TeacherActions />
         </div>
 
-        {/* Find Students Section - Lazy loaded */}
+        {/* Map Section - Show nearby students, jobs, and books */}
         <div className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2"><GraduationCap className="w-6 h-6" /> Find Students</h2>
-          <Suspense fallback={<DashboardPageSkeleton />}>
-            <StudentDashboard showStudents={true} title="Students Nearby" description="Locate students for in-person sessions" />
-          </Suspense>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2"><GraduationCap className="w-6 h-6" /> Explore Nearby</h2>
+          <MapContainer
+            userRole="teacher"
+            tutors={[]}
+            books={books}
+            jobs={jobs}
+            students={students}
+          />
         </div>
       </div>
     </LayoutShell>

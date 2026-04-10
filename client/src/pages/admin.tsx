@@ -25,6 +25,7 @@ import {
     Loader2,
     ShieldAlert,
     Shield,
+    CheckCircle2,
 } from "lucide-react";
 import { Redirect } from "wouter";
 
