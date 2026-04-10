@@ -8,11 +8,14 @@ import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import { Login, Register } from "@/pages/auth";
 import TutorsPage from "@/pages/tutors";
+import TutorDetailPage from "@/pages/tutor-detail";
 import JobsPage from "@/pages/jobs";
+import JobDetailPage from "@/pages/job-detail";
 import BooksPage from "@/pages/books";
 import Dashboard from "@/pages/dashboard";
 import ChatbotPage from "@/pages/chatbot";
 import AdminPage from "@/pages/admin";
+import ProfilePage from "@/pages/profile";
 
 function Router() {
   return (
@@ -20,7 +23,10 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/profile" component={ProfilePage} />
+      <Route path="/tutors/:id" component={TutorDetailPage} />
       <Route path="/tutors" component={TutorsPage} />
+      <Route path="/jobs/:id" component={JobDetailPage} />
       <Route path="/jobs" component={JobsPage} />
       <Route path="/books" component={BooksPage} />
       <Route path="/dashboard" component={Dashboard} />

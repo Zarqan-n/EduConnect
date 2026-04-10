@@ -25,25 +25,25 @@ export function Footer() {
   ];
 
   return (
-    <footer className="relative border-t border-primary/20 bg-gradient-to-b from-background via-background to-primary/5 text-foreground animate-slide-in-from-bottom overflow-hidden">
+    <footer className="relative border-t border-blue-200/50 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 text-foreground animate-slide-in-from-bottom overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-indigo-300/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-indigo-400/10 to-blue-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
       <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
         {/* Top Section with Logo */}
-        <div className="mb-12 pb-8 border-b border-primary/20">
+        <div className="mb-12 pb-8 border-b border-blue-200/30">
           <div className="flex flex-col items-center text-center mb-8">
-            <div className="inline-flex items-center gap-3 mb-4 p-3 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 backdrop-blur-sm border border-primary/20 transform hover:scale-110 transition-transform duration-300 animate-fade-in">
+            <div className="inline-flex items-center gap-3 mb-4 p-3 rounded-2xl bg-gradient-to-r from-blue-100/50 via-indigo-100/50 to-purple-100/50 backdrop-blur-sm border border-blue-200/50 transform hover:scale-110 transition-transform duration-300 animate-fade-in shadow-lg">
               <img 
                 src={Logo} 
                 alt="EduConnect Logo" 
                 className="h-8 w-auto drop-shadow-lg animate-bounce" 
                 style={{ animationDuration: "3s" }}
               />
-              <h2 className="font-heading font-bold text-2xl bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              <h2 className="font-heading font-bold text-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 EduConnect
               </h2>
             </div>
@@ -58,7 +58,7 @@ export function Footer() {
           {/* Brand Section */}
           <div className="space-y-4 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
             <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 animate-spin" style={{ animationDuration: "3s" }}>
+              <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
                 <span className="text-white font-bold text-sm">✓</span>
               </div>
               <span className="font-heading font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -116,26 +116,26 @@ export function Footer() {
               <li className="flex items-start gap-3 hover:translate-x-1 transition-transform duration-200">
                 <Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0 animate-pulse" />
                 <a 
-                  href="mailto:support@educonnect.com" 
+                  href="mailto:itszarqan@gmail.com" 
                   className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 break-words"
                 >
-                  support@educonnect.com
+                  itszarqan@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-3 hover:translate-x-1 transition-transform duration-200">
                 <Phone className="h-4 w-4 text-accent mt-0.5 flex-shrink-0 animate-pulse" style={{ animationDelay: "0.5s" }} />
                 <a 
-                  href="tel:+1234567890" 
+                  href="tel:+8017927972" 
                   className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200"
                 >
-                  +1 (234) 567-890
+                  +(91) 8017927972
                 </a>
               </li>
               <li className="flex items-start gap-3 hover:translate-x-1 transition-transform duration-200">
                 <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0 animate-pulse" style={{ animationDelay: "1s" }} />
                 <span className="text-sm text-muted-foreground">
-                  123 Education St,<br />
-                  Learning City, LC 12345
+                  Rajabazar, Kolkata<br />
+                  West Bengal, India
                 </span>
               </li>
             </ul>
@@ -172,7 +172,7 @@ export function Footer() {
         {/* Bottom Message */}
         <div className="pt-6 border-t border-primary/20 text-center group">
           <p className="text-xs text-muted-foreground font-semibold tracking-wide">
-            Made with <span className="text-primary inline-block group-hover:scale-125 transition-transform duration-300 animate-pulse">♥</span> for learners and educators worldwide
+            Made with <span className="text-primary inline-block group-hover:scale-125 transition-transform duration-600 animate-pulse">❤️</span> for learners and educators worldwide
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
-import 'dotenv/config';
+import 'dotenv/config'; // loads variables from .env (see .env.example)
 import express, { type Request, Response, NextFunction } from "express";
+// set HUGGINGFACE_API_KEY in your .env when using Hugging Face inference API
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -36,7 +37,6 @@ export function log(message: string, source = "express") {
     hour12: true,
   });
 
-  console.log(`${formattedTime} [${source}] ${message}`);
 }
 
 async function ensureAdminUser() {

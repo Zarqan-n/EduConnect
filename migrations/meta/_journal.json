@@ -15,6 +15,20 @@
       "when": 1740672000000,
       "tag": "0001_add_tutor_timings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771334400000,
+      "tag": "0002_add_institution_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774953000000,
+      "tag": "0004_enforce_unique_reviews_feedback",
+      "breakpoints": true
     }
   ]
 }

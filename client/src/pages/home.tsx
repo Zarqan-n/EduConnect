@@ -106,9 +106,7 @@ export default function Home() {
       <HowItWorks />
 
       {/* Map Preview / Quick Search */}
-      <div className="py-12">
-        <StudentDashboard title="Explore Nearby Tutors" description="Quickly find tutors, book sellers and institutions near you from the home page" />
-      </div>
+      
     </LayoutShell>
   );
 }

@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useAdmin } from "@/hooks/use-admin";
 import { LayoutShell } from "@/components/layout-shell";
+import { StatsRowSkeleton, TableCardSkeleton } from "@/components/app-skeletons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -33,8 +34,22 @@ export default function AdminPage() {
     if (authLoading) {
         return (
             <LayoutShell>
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="space-y-8">
+                    <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 p-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-xl bg-white/10" />
+                            <div className="space-y-2">
+                                <div className="h-8 w-40 rounded-xl bg-white/20" />
+                                <div className="h-4 w-56 rounded-lg bg-white/10" />
+                            </div>
+                        </div>
+                    </div>
+                    <StatsRowSkeleton />
+                    <Card>
+                        <CardContent className="p-6">
+                            <TableCardSkeleton columns={7} rows={6} />
+                        </CardContent>
+                    </Card>
                 </div>
             </LayoutShell>
         );
@@ -82,38 +97,46 @@ function AdminDashboard() {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
-                    <StatCard
-                        title="Total Users"
-                        value={statsLoading ? "..." : stats?.users ?? 0}
-                        icon={Users}
-                        gradient="from-blue-500 to-cyan-500"
-                        bgGradient="from-blue-50 to-cyan-50/30"
-                        borderColor="border-blue-200"
-                    />
-                    <StatCard
-                        title="Active Tutors"
-                        value={statsLoading ? "..." : stats?.tutors ?? 0}
-                        icon={GraduationCap}
-                        gradient="from-violet-500 to-purple-500"
-                        bgGradient="from-violet-50 to-purple-50/30"
-                        borderColor="border-violet-200"
-                    />
-                    <StatCard
-                        title="Job Listings"
-                        value={statsLoading ? "..." : stats?.jobs ?? 0}
-                        icon={Briefcase}
-                        gradient="from-orange-500 to-amber-500"
-                        bgGradient="from-orange-50 to-amber-50/30"
-                        borderColor="border-orange-200"
-                    />
-                    <StatCard
-                        title="Books Listed"
-                        value={statsLoading ? "..." : stats?.books ?? 0}
-                        icon={BookOpen}
-                        gradient="from-emerald-500 to-green-500"
-                        bgGradient="from-emerald-50 to-green-50/30"
-                        borderColor="border-emerald-200"
-                    />
+                    {statsLoading ? (
+                        <div className="col-span-full">
+                            <StatsRowSkeleton />
+                        </div>
+                    ) : (
+                        <>
+                            <StatCard
+                                title="Total Users"
+                                value={stats?.users ?? 0}
+                                icon={Users}
+                                gradient="from-blue-500 to-cyan-500"
+                                bgGradient="from-blue-50 to-cyan-50/30"
+                                borderColor="border-blue-200"
+                            />
+                            <StatCard
+                                title="Active Tutors"
+                                value={stats?.tutors ?? 0}
+                                icon={GraduationCap}
+                                gradient="from-violet-500 to-purple-500"
+                                bgGradient="from-violet-50 to-purple-50/30"
+                                borderColor="border-violet-200"
+                            />
+                            <StatCard
+                                title="Job Listings"
+                                value={stats?.jobs ?? 0}
+                                icon={Briefcase}
+                                gradient="from-orange-500 to-amber-500"
+                                bgGradient="from-orange-50 to-amber-50/30"
+                                borderColor="border-orange-200"
+                            />
+                            <StatCard
+                                title="Books Listed"
+                                value={stats?.books ?? 0}
+                                icon={BookOpen}
+                                gradient="from-emerald-500 to-green-500"
+                                bgGradient="from-emerald-50 to-green-50/30"
+                                borderColor="border-emerald-200"
+                            />
+                        </>
+                    )}
                 </div>
 
                 {/* Data Tabs */}
@@ -139,7 +162,7 @@ function AdminDashboard() {
                             </CardHeader>
                             <CardContent>
                                 {usersLoading ? (
-                                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-blue-500" /></div>
+                                    <TableCardSkeleton columns={7} rows={5} />
                                 ) : !users?.length ? (
                                     <p className="text-center text-muted-foreground py-8">No users found.</p>
                                 ) : (
@@ -205,7 +228,7 @@ function AdminDashboard() {
                             </CardHeader>
                             <CardContent>
                                 {jobsLoading ? (
-                                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-orange-500" /></div>
+                                    <TableCardSkeleton columns={7} rows={5} />
                                 ) : !jobs?.length ? (
                                     <p className="text-center text-muted-foreground py-8">No jobs found.</p>
                                 ) : (
@@ -263,7 +286,7 @@ function AdminDashboard() {
                             </CardHeader>
                             <CardContent>
                                 {booksLoading ? (
-                                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-emerald-500" /></div>
+                                    <TableCardSkeleton columns={8} rows={5} />
                                 ) : !books?.length ? (
                                     <p className="text-center text-muted-foreground py-8">No books found.</p>
                                 ) : (

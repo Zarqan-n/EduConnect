@@ -261,8 +261,12 @@ export default function ChatbotPage() {
       });
 
       if (!resp.ok) {
-        if (resp.status === 503) setMode("offline");
-        throw new Error(`HTTP ${resp.status}`);
+        if (resp.status === 503) {
+          setMode("offline");
+          throw new Error("AI service is offline. Using local responses.");
+        }
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(`HTTP ${resp.status}: ${errorData?.message || "Request failed"}`);
       }
 
       const data: any = await resp.json();
@@ -271,7 +275,7 @@ export default function ChatbotPage() {
 
       setMode("ai");
       setMessages((prev) => prev.map((m) => (m.id === pendingId ? { ...m, text: aiText } : m)));
-    } catch {
+    } catch (error) {
       // fallback to local help if AI isn't configured / fails
       setMode((prev) => (prev === "offline" ? "offline" : "unknown"));
       const reply = buildReply(trimmed);

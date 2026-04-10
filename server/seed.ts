@@ -62,7 +62,7 @@ async function seed() {
     subjects: ["Mathematics", "Physics"],
     classes: ["Grade 9", "Grade 10", "Grade 11"],
     experience: 5,
-    hourlyRate: 40,
+    monthlyRate: 5000,
     mode: "online",
     rating: 48 // 4.8
   });

@@ -6,12 +6,29 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LocationSearch } from "@/components/location-search";
 import { MapView } from "@/components/map-view";
+import { GridCardSkeleton } from "@/components/app-skeletons";
 import { useTutors } from "@/hooks/use-tutors";
 import { useBooks } from "@/hooks/use-books";
 import { useJobs } from "@/hooks/use-jobs";
 import { useUsersByRole } from "@/hooks/use-users";
-import { Loader2, MapPin, Search } from "lucide-react";
+import { MapPin, Search, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+// badge color helper copied from map-view for consistency
+const getTypeBadgeColor = (type: string) => {
+  switch (type) {
+    case "student":
+      return "bg-violet-100 text-violet-800";
+    case "tutor":
+      return "bg-blue-100 text-blue-800";
+    case "seller":
+      return "bg-green-100 text-green-800";
+    case "institution":
+      return "bg-amber-100 text-amber-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
 
 interface LocationSuggestion {
   displayName: string;
@@ -107,7 +124,7 @@ export function StudentDashboard({ title, description, showStudents = false, vie
             if (modeFilter !== "both" && tutorMode !== modeFilter) return;
           }
           // Apply budget filter
-          if (budgetFilter != null && (tutor.tutorProfile?.hourlyRate ?? Infinity) > budgetFilter) return;
+          if (budgetFilter != null && (tutor.tutorProfile?.monthlyRate ?? Infinity) > budgetFilter) return;
           // Apply time filter
           if (timeFilter && timeFilter.trim() !== "") {
             const timings = (tutor.tutorProfile?.timings || "").toLowerCase();
@@ -127,7 +144,7 @@ export function StudentDashboard({ title, description, showStudents = false, vie
             lon,
             distance,
             details: {
-              rate: tutor.tutorProfile?.hourlyRate || 500,
+              rate: tutor.tutorProfile?.monthlyRate || 500,
               subjects: tutor.tutorProfile?.subjects || [],
               rating: tutor.tutorProfile?.rating ? tutor.tutorProfile.rating / 10 : 4.5,
               contactEmail: tutor.email,
@@ -383,6 +400,9 @@ export function StudentDashboard({ title, description, showStudents = false, vie
       {selectedLocation && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Results</h3>
+          {isLoadingMarkers ? (
+            <GridCardSkeleton count={3} className="md:grid-cols-3" />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {mapMarkers.filter(m => {
               if (m.distance > distanceFilter) return false;
@@ -408,60 +428,91 @@ export function StudentDashboard({ title, description, showStudents = false, vie
                 <Card
                   key={markerId}
                   ref={(el) => { resultCardRefs.current[markerId] = el; }}
-                  className={`transition-all duration-500 ${isHighlighted
-                    ? "ring-2 ring-blue-500 shadow-lg shadow-blue-200 scale-[1.02] bg-blue-50/50"
-                    : ""
-                    }`}
+                  className={`p-4 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200 cursor-pointer ${
+                    isHighlighted
+                      ? "ring-2 ring-blue-500 shadow-lg shadow-blue-200 scale-[1.02] bg-blue-50/50"
+                      : ""
+                  }`}
+                  onClick={() => handleMarkerClick(marker)}
                 >
-                  <CardContent>
-                    <div className="flex pt-6 justify-between">
-                      <div>
-                        <h4 className="font-medium">{marker.name}</h4>
-                        <p className="text-xs text-muted-foreground">{marker.type} • {marker.distance.toFixed(1)} km</p>
-                        {marker.details?.subjects && (
-                          <p className="text-xs mt-1">Subjects: {marker.details.subjects.join(", ")}</p>
-                        )}
-                        {marker.details?.rate && (
-                          <p className="text-xs mt-1">Rate: ₹{marker.details.rate}/Month</p>
-                        )}
-                        {marker.details?.mode && (
-                          <p className="text-xs mt-1">Mode: {marker.details.mode === 'home' ? 'In-person' : marker.details.mode}</p>
-                        )}
-                        {marker.details && (marker.details as any).timings && (
-                          <p className="text-xs mt-1">Timings: {(marker.details as any).timings}</p>
-                        )}
-                        {marker.details?.price && (
-                          <p className="text-xs mt-1">Price: ₹{marker.details.price}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center">
-                        <button
-                          className="border rounded p-1.5 bg-blue-300"
-                          onClick={() => {
-                            const email = (marker.details as any)?.sellerEmail || (marker.details as any)?.contactEmail;
-                            if (email) {
-                              const subject = encodeURIComponent(`Inquiry about ${marker.name}`);
-                              window.location.href = `mailto:${email}?subject=${subject}`;
-                            } else {
-                              // fallback: navigate to profile if userId available
-                              const uid = (marker.details as any)?.userId || (marker.details as any)?.sellerId;
-                              if (uid) {
-                                window.location.href = `/profile/${uid}`;
-                              } else {
-                                alert("No contact information available.");
-                              }
-                            }
-                          }}
-                        >
-                          Contact
-                        </button>
-                      </div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">
+                        {marker.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {marker.type} • {marker.distance.toFixed(1)} km
+                      </p>
                     </div>
-                  </CardContent>
+                    <Badge className={`text-xs flex-shrink-0 ${getTypeBadgeColor(marker.type)}`}>
+                      {marker.type}
+                    </Badge>
+                  </div>
+
+                  {marker.details && (
+                    <div className="space-y-2 text-xs">
+                      {marker.details.rate && (
+                        <div className="flex items-center justify-between px-2 py-1 bg-white/50 dark:bg-slate-700/50 rounded">
+                          <span className="text-slate-600 dark:text-slate-300">Rate:</span>
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">₹{marker.details.rate}/Month</span>
+                        </div>
+                      )}
+
+                      {marker.details.rating && (
+                        <div className="flex items-center justify-between px-2 py-1 bg-white/50 dark:bg-slate-700/50 rounded">
+                          <span className="text-slate-600 dark:text-slate-300">Rating:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-slate-900 dark:text-slate-100">{marker.details.rating}</span>
+                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          </div>
+                        </div>
+                      )}
+
+                      {marker.details.subjects && marker.details.subjects.length > 0 && (
+                        <div className="px-2 py-1 bg-white/50 dark:bg-slate-700/50 rounded">
+                          <p className="text-slate-600 dark:text-slate-300 mb-1">Subjects:</p>
+                          <div className="flex gap-1 flex-wrap">
+                            {marker.details.subjects.slice(0, 2).map((subject, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {subject}
+                              </Badge>
+                            ))}
+                            {marker.details.subjects.length > 2 && (
+                              <span className="text-xs text-slate-500 dark:text-slate-400 px-2 py-1">
+                                +{marker.details.subjects.length - 2} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {marker.details.price && (
+                        <div className="flex items-center justify-between px-2 py-1 bg-white/50 dark:bg-slate-700/50 rounded">
+                          <span className="text-slate-600 dark:text-slate-300">Price:</span>
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">₹{marker.details.price}</span>
+                        </div>
+                      )}
+
+                      {(marker.details as any).mode && (
+                        <div className="flex items-center justify-between px-2 py-1 bg-white/50 dark:bg-slate-700/50 rounded">
+                          <span className="text-slate-600 dark:text-slate-300">Mode:</span>
+                          <span className="text-slate-900 dark:text-slate-100">{(marker.details as any).mode === 'home' ? 'In-person' : (marker.details as any).mode}</span>
+                        </div>
+                      )}
+
+                      {(marker.details as any).timings && (
+                        <div className="flex items-center justify-between px-2 py-1 bg-white/50 dark:bg-slate-700/50 rounded">
+                          <span className="text-slate-600 dark:text-slate-300">Timings:</span>
+                          <span className="text-slate-900 dark:text-slate-100 text-right">{(marker.details as any).timings}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </Card>
               );
             })}
           </div>
+          )}
         </div>
       )}
     </div>

@@ -1,10 +1,11 @@
 import {
-  User, InsertUser, TutorProfile, InsertTutorProfile, Job, InsertJob,
-  Application, Book, InsertBook, Review, InsertReview,
-  users, tutorProfiles, jobs, applications, books, reviews
+  User, InsertUser, TutorProfile, InsertTutorProfile, InstitutionProfile, InsertInstitutionProfile, Job, InsertJob,
+  Application, Book, InsertBook, Review, InsertReview, JobFeedback, InsertJobFeedback,
+  Tuition, InsertTuition, StudentEnrollment, InsertStudentEnrollment, TuitionPayment, InsertTuitionPayment,
+  users, tutorProfiles, institutionProfiles, jobs, applications, books, reviews, jobFeedback, tuitions, studentEnrollments, tuitionPayments
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, desc, count } from "drizzle-orm";
+import { eq, ilike, and, desc, count, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -20,18 +21,73 @@ export interface IStorage {
   getTutorProfile(userId: number): Promise<TutorProfile | undefined>;
   getTutors(filters?: { subject?: string, location?: string, mode?: string, maxBudget?: number, time?: string }): Promise<(User & { tutorProfile: TutorProfile })[]>;
 
+  // Institutions
+  createInstitutionProfile(profile: InsertInstitutionProfile): Promise<InstitutionProfile>;
+  updateInstitutionProfile(userId: number, updates: Partial<InsertInstitutionProfile>): Promise<InstitutionProfile | undefined>;
+  getInstitutionProfile(userId: number): Promise<InstitutionProfile | undefined>;
+  getInstitutions(filters?: { location?: string, type?: string }): Promise<(User & { institutionProfile: InstitutionProfile })[]>;
+
   // Jobs
   createJob(job: InsertJob): Promise<Job>;
   getJobs(query?: string): Promise<(Job & { institution: User })[]>;
+  getJob(id: number): Promise<(Job & { institution: User }) | undefined>;
   createApplication(app: any): Promise<Application>; // Type 'any' for simplicity in interface, implement properly
+  createJobFeedback(feedback: Omit<InsertJobFeedback, "userId"> & { userId: number }): Promise<JobFeedback>;
+  getFeedbackForJob(jobId: number): Promise<JobFeedback[]>;
+  getJobFeedbackByUserAndJob(jobId: number, userId: number): Promise<JobFeedback | undefined>;
+  updateJobFeedback(feedbackId: number, updates: Partial<Omit<JobFeedback, 'id' | 'jobId' | 'userId'>>): Promise<JobFeedback | undefined>;
+  deleteJobFeedback(feedbackId: number): Promise<void>;
 
   // Books
   createBook(book: InsertBook): Promise<Book>;
   getBooks(filters?: { subject?: string, classLevel?: string }): Promise<(Book & { seller: User })[]>;
+  getBook(id: number): Promise<(Book & { seller: User }) | undefined>;
+  getUserBooks(userId: number): Promise<(Book & { seller: User })[]>;
 
   // Reviews
   createReview(review: InsertReview): Promise<Review>;
   getReviewsForTutor(tutorId: number): Promise<Review[]>;
+  getReview(id: number): Promise<Review | undefined>;
+  getUserTutorReviews(userId: number): Promise<Review[]>;
+  getReviewByStudentAndTutor(studentId: number, tutorId: number): Promise<Review | undefined>;
+  updateReview(id: number, updates: { rating: number; comment: string }): Promise<Review>;
+  deleteReview(id: number): Promise<void>;
+
+  // User Content Management
+  getUserJobs(userId: number): Promise<(Job & { institution: User })[]>;
+  getUserApplications(userId: number): Promise<Application[]>;
+  getUserJobFeedback(userId: number): Promise<JobFeedback[]>;
+  deleteUserContent(userId: number): Promise<void>;
+  getJobFeedback(id: number): Promise<JobFeedback | undefined>;
+
+  // Tuitions
+  createTuition(tuition: InsertTuition): Promise<Tuition>;
+  getTuitionsByTutor(tutorId: number): Promise<Tuition[]>;
+  getAllTuitions(): Promise<(Tuition & { tutor: User })[]>;
+  getTuition(id: number): Promise<Tuition | undefined>;
+  updateTuition(id: number, updates: Partial<InsertTuition>): Promise<Tuition | undefined>;
+  deleteTuition(id: number): Promise<void>;
+
+  // Student Enrollments
+  enrollStudent(enrollment: InsertStudentEnrollment): Promise<StudentEnrollment>;
+  getStudentEnrollments(studentId: number): Promise<(StudentEnrollment & { tuition: Tuition & { tutor: User } })[]>;
+  getTutorEnrollments(tutorId: number): Promise<(StudentEnrollment & { student: User, tuition: Tuition })[]>;
+  getEnrollmentsByTuition(tuitionId: number): Promise<(StudentEnrollment & { student: User })[]>;
+  removeEnrollment(enrollmentId: number): Promise<void>;
+  getEnrollment(studentId: number, tuitionId: number): Promise<StudentEnrollment | undefined>;
+
+  // Tuition Payments
+  recordPayment(payment: InsertTuitionPayment): Promise<TuitionPayment>;
+  getTutorPayments(tutorId: number): Promise<(TuitionPayment & { student: User, tuition: Tuition })[]>;
+  getStudentPayments(studentId: number): Promise<(TuitionPayment & { tutor: User, tuition: Tuition })[]>;
+  getTutorAnalytics(tutorId: number): Promise<{
+    totalStudents: number;
+    enrollmentsByTuition: { tuitionId: number; subject: string; count: number }[];
+    monthlyRevenue: { month: string; amount: number }[];
+    feesThisMonth: number;
+    pendingFees: number;
+  }>;
+  markPaymentAsReceived(paymentId: number): Promise<TuitionPayment | undefined>;
 
   // Admin
   getAllUsers(): Promise<User[]>;
@@ -79,8 +135,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTutorProfile(userId: number, updates: Partial<InsertTutorProfile>): Promise<TutorProfile | undefined> {
-    const [updated] = await db.update(tutorProfiles).set(updates).where(eq(tutorProfiles.userId, userId)).returning();
-    return updated;
+    try {
+      const [updated] = await db.update(tutorProfiles).set(updates).where(eq(tutorProfiles.userId, userId)).returning();
+      return updated;
+    } catch (err: any) {
+      if (err?.code === '42703' || (err?.message || '').includes('timings')) {
+        // Timings column missing, retry without returning full row
+        await db.update(tutorProfiles).set(updates).where(eq(tutorProfiles.userId, userId));
+        return this.getTutorProfile(userId);
+      }
+      throw err;
+    }
   }
 
   async getTutorProfile(userId: number): Promise<TutorProfile | undefined> {
@@ -95,7 +160,7 @@ export class DatabaseStorage implements IStorage {
           subjects: tutorProfiles.subjects,
           classes: tutorProfiles.classes,
           experience: tutorProfiles.experience,
-          hourlyRate: tutorProfiles.hourlyRate,
+          monthlyRate: tutorProfiles.monthlyRate,
           mode: tutorProfiles.mode,
           rating: tutorProfiles.rating,
           createdAt: tutorProfiles.createdAt,
@@ -104,6 +169,35 @@ export class DatabaseStorage implements IStorage {
       }
       throw err;
     }
+  }
+
+  // Institutions
+  async createInstitutionProfile(profile: InsertInstitutionProfile): Promise<InstitutionProfile> {
+    const [newProfile] = await db.insert(institutionProfiles).values(profile).returning();
+    return newProfile;
+  }
+
+  async updateInstitutionProfile(userId: number, updates: Partial<InsertInstitutionProfile>): Promise<InstitutionProfile | undefined> {
+    const [updated] = await db.update(institutionProfiles).set(updates).where(eq(institutionProfiles.userId, userId)).returning();
+    return updated;
+  }
+
+  async getInstitutionProfile(userId: number): Promise<InstitutionProfile | undefined> {
+    const [profile] = await db.select().from(institutionProfiles).where(eq(institutionProfiles.userId, userId));
+    return profile;
+  }
+
+  async getInstitutions(filters?: { location?: string, type?: string }): Promise<(User & { institutionProfile: InstitutionProfile })[]> {
+    const conditions = [];
+    if (filters?.location) conditions.push(ilike(users.location, `%${filters.location}%`));
+    if (filters?.type) conditions.push(ilike(institutionProfiles.type, `%${filters.type}%`));
+
+    const results = await db.select()
+      .from(users)
+      .innerJoin(institutionProfiles, eq(users.id, institutionProfiles.userId))
+      .where(and(...conditions));
+
+    return results.map(r => ({ ...r.users, institutionProfile: r.institution_profiles }));
   }
 
   async getTutors(filters?: { subject?: string, location?: string, mode?: string, maxBudget?: number, time?: string }): Promise<(User & { tutorProfile: TutorProfile })[]> {
@@ -129,7 +223,7 @@ export class DatabaseStorage implements IStorage {
             subjects: tutorProfiles.subjects,
             classes: tutorProfiles.classes,
             experience: tutorProfiles.experience,
-            hourlyRate: tutorProfiles.hourlyRate,
+            monthlyRate: tutorProfiles.monthlyRate,
             mode: tutorProfiles.mode,
             rating: tutorProfiles.rating,
             createdAt: tutorProfiles.createdAt,
@@ -160,7 +254,7 @@ export class DatabaseStorage implements IStorage {
       filtered = filtered.filter(u => u.tutorProfile.mode === filters.mode);
     }
     if (filters?.maxBudget != null) {
-      filtered = filtered.filter(u => (u.tutorProfile.hourlyRate ?? Infinity) <= filters.maxBudget!);
+      filtered = filtered.filter(u => (u.tutorProfile.monthlyRate ?? Infinity) <= filters.maxBudget!);
     }
     if (filters?.time) {
       const q = filters.time.toLowerCase();
@@ -209,6 +303,43 @@ export class DatabaseStorage implements IStorage {
     return application;
   }
 
+  async getJob(id: number): Promise<(Job & { institution: User }) | undefined> {
+    const results = await db.select({
+      job: jobs,
+      institution: users,
+    })
+      .from(jobs)
+      .innerJoin(users, eq(jobs.institutionId, users.id))
+      .where(eq(jobs.id, id));
+
+    if (results.length === 0) return undefined;
+    const r = results[0];
+    return { ...r.job, institution: r.institution };
+  }
+
+  async createJobFeedback(feedback: Omit<InsertJobFeedback, "userId"> & { userId: number }): Promise<JobFeedback> {
+    const [newFeedback] = await db.insert(jobFeedback).values(feedback).returning();
+    return newFeedback;
+  }
+
+  async getFeedbackForJob(jobId: number): Promise<JobFeedback[]> {
+    return await db.select().from(jobFeedback).where(eq(jobFeedback.jobId, jobId)).orderBy(desc(jobFeedback.createdAt)).limit(10);
+  }
+
+  async getJobFeedbackByUserAndJob(jobId: number, userId: number): Promise<JobFeedback | undefined> {
+    const result = await db.select().from(jobFeedback).where(and(eq(jobFeedback.jobId, jobId), eq(jobFeedback.userId, userId)));
+    return result[0];
+  }
+
+  async updateJobFeedback(feedbackId: number, updates: Partial<Omit<JobFeedback, 'id' | 'jobId' | 'userId'>>): Promise<JobFeedback | undefined> {
+    const result = await db.update(jobFeedback).set(updates).where(eq(jobFeedback.id, feedbackId)).returning();
+    return result[0];
+  }
+
+  async deleteJobFeedback(feedbackId: number): Promise<void> {
+    await db.delete(jobFeedback).where(eq(jobFeedback.id, feedbackId));
+  }
+
   // Books
   async createBook(book: InsertBook): Promise<Book> {
     const [newBook] = await db.insert(books).values(book).returning();
@@ -244,7 +375,81 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getReviewsForTutor(tutorId: number): Promise<Review[]> {
-    return await db.select().from(reviews).where(eq(reviews.tutorId, tutorId));
+    return await db.select().from(reviews).where(eq(reviews.tutorId, tutorId)).orderBy(desc(reviews.createdAt));
+  }
+
+  async getReviewByStudentAndTutor(studentId: number, tutorId: number): Promise<Review | undefined> {
+    const [review] = await db.select().from(reviews)
+      .where(and(eq(reviews.studentId, studentId), eq(reviews.tutorId, tutorId)));
+    return review;
+  }
+
+  async updateReview(id: number, updates: { rating: number; comment: string }): Promise<Review> {
+    const [updated] = await db.update(reviews).set(updates).where(eq(reviews.id, id)).returning();
+    return updated;
+  }
+
+  async getReview(id: number): Promise<Review | undefined> {
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
+    return review;
+  }
+
+  async getUserTutorReviews(userId: number): Promise<Review[]> {
+    return await db.select().from(reviews).where(eq(reviews.studentId, userId)).orderBy(desc(reviews.createdAt));
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    await db.delete(reviews).where(eq(reviews.id, id));
+  }
+
+  // User Content Management
+  async getBook(id: number): Promise<(Book & { seller: User }) | undefined> {
+    const result = await db.select({ book: books, seller: users })
+      .from(books)
+      .innerJoin(users, eq(books.sellerId, users.id))
+      .where(eq(books.id, id));
+    if (result[0]) {
+      return { ...result[0].book, seller: result[0].seller };
+    }
+    return undefined;
+  }
+
+  async getUserBooks(userId: number): Promise<(Book & { seller: User })[]> {
+    const results = await db.select({ book: books, seller: users })
+      .from(books)
+      .innerJoin(users, eq(books.sellerId, users.id))
+      .where(eq(books.sellerId, userId))
+      .orderBy(desc(books.createdAt));
+    return results.map(r => ({ ...r.book, seller: r.seller }));
+  }
+
+  async getUserJobs(userId: number): Promise<(Job & { institution: User })[]> {
+    const results = await db.select({ job: jobs, institution: users })
+      .from(jobs)
+      .innerJoin(users, eq(jobs.institutionId, users.id))
+      .where(eq(jobs.institutionId, userId))
+      .orderBy(desc(jobs.createdAt));
+    return results.map(r => ({ ...r.job, institution: r.institution }));
+  }
+
+  async getUserApplications(userId: number): Promise<Application[]> {
+    return await db.select().from(applications).where(eq(applications.teacherId, userId)).orderBy(desc(applications.appliedAt));
+  }
+
+  async getUserJobFeedback(userId: number): Promise<JobFeedback[]> {
+    return await db.select().from(jobFeedback).where(eq(jobFeedback.userId, userId)).orderBy(desc(jobFeedback.createdAt));
+  }
+
+  async getJobFeedback(id: number): Promise<JobFeedback | undefined> {
+    const [feedback] = await db.select().from(jobFeedback).where(eq(jobFeedback.id, id));
+    return feedback;
+  }
+
+  async deleteUserContent(userId: number): Promise<void> {
+    // Delete all user-generated content
+    await db.delete(reviews).where(eq(reviews.studentId, userId));
+    await db.delete(jobFeedback).where(eq(jobFeedback.userId, userId));
+    await db.delete(applications).where(eq(applications.teacherId, userId));
   }
 
   // Admin
@@ -281,6 +486,7 @@ export class DatabaseStorage implements IStorage {
     }
     await db.delete(jobs).where(eq(jobs.institutionId, id));
     await db.delete(tutorProfiles).where(eq(tutorProfiles.userId, id));
+    await db.delete(institutionProfiles).where(eq(institutionProfiles.userId, id));
     await db.delete(users).where(eq(users.id, id));
   }
 
@@ -303,6 +509,260 @@ export class DatabaseStorage implements IStorage {
       tutors: tutorsCount.count,
       jobs: jobsCount.count,
       books: booksCount.count,
+    };
+  }
+
+  // Tuitions
+  async createTuition(tuition: InsertTuition): Promise<Tuition> {
+    const [newTuition] = await db.insert(tuitions).values(tuition).returning();
+    return newTuition;
+  }
+
+  async getTuitionsByTutor(tutorId: number): Promise<Tuition[]> {
+    return await db.select().from(tuitions).where(eq(tuitions.tutorId, tutorId)).orderBy(desc(tuitions.createdAt));
+  }
+
+  async getAllTuitions(): Promise<any[]> {
+    const results = await db.select({ 
+      tuition: tuitions, 
+      tutor: users,
+      tutorProfile: tutorProfiles
+    })
+      .from(tuitions)
+      .innerJoin(users, eq(tuitions.tutorId, users.id))
+      .leftJoin(tutorProfiles, eq(users.id, tutorProfiles.userId))
+      .where(eq(tuitions.isActive, true))
+      .orderBy(desc(tuitions.createdAt));
+    return results.map(r => ({ 
+      ...r.tuition, 
+      tutor: {
+        ...r.tutor,
+        tutorProfile: r.tutorProfile
+      }
+    }));
+  }
+
+  async getTuition(id: number): Promise<Tuition | undefined> {
+    const [tuition] = await db.select().from(tuitions).where(eq(tuitions.id, id));
+    return tuition;
+  }
+
+  async updateTuition(id: number, updates: Partial<InsertTuition>): Promise<Tuition | undefined> {
+    const [updated] = await db.update(tuitions).set(updates).where(eq(tuitions.id, id)).returning();
+    return updated;
+  }
+
+  async deleteTuition(id: number): Promise<void> {
+    await db.delete(tuitions).where(eq(tuitions.id, id));
+  }
+
+  // Student Enrollments
+  async enrollStudent(enrollment: InsertStudentEnrollment): Promise<StudentEnrollment> {
+    const [newEnrollment] = await db.insert(studentEnrollments).values(enrollment).returning();
+    return newEnrollment;
+  }
+
+  async getStudentEnrollments(studentId: number): Promise<(StudentEnrollment & { tuition: Tuition & { tutor: User } })[]> {
+    const results = await db
+      .select()
+      .from(studentEnrollments)
+      .innerJoin(tuitions, eq(studentEnrollments.tuitionId, tuitions.id))
+      .innerJoin(users, eq(tuitions.tutorId, users.id))
+      .where(eq(studentEnrollments.studentId, studentId));
+    
+    return results.map(r => ({
+      ...r.student_enrollments,
+      tuition: {
+        ...r.tuitions,
+        tutor: r.users
+      }
+    }));
+  }
+
+  async getTutorEnrollments(tutorId: number): Promise<(StudentEnrollment & { student: User, tuition: Tuition })[]> {
+    const results = await db
+      .select()
+      .from(studentEnrollments)
+      .innerJoin(users, eq(studentEnrollments.studentId, users.id))
+      .innerJoin(tuitions, eq(studentEnrollments.tuitionId, tuitions.id))
+      .where(eq(studentEnrollments.tutorId, tutorId));
+    
+    return results.map(r => ({
+      ...r.student_enrollments,
+      student: r.users,
+      tuition: r.tuitions
+    }));
+  }
+
+  async getEnrollmentsByTuition(tuitionId: number): Promise<(StudentEnrollment & { student: User })[]> {
+    const results = await db
+      .select()
+      .from(studentEnrollments)
+      .innerJoin(users, eq(studentEnrollments.studentId, users.id))
+      .where(eq(studentEnrollments.tuitionId, tuitionId));
+    
+    return results.map(r => ({
+      ...r.student_enrollments,
+      student: r.users
+    }));
+  }
+
+  async removeEnrollment(enrollmentId: number): Promise<void> {
+    await db.delete(studentEnrollments).where(eq(studentEnrollments.id, enrollmentId));
+  }
+
+  async getEnrollment(studentId: number, tuitionId: number): Promise<StudentEnrollment | undefined> {
+    const [enrollment] = await db
+      .select()
+      .from(studentEnrollments)
+      .where(and(eq(studentEnrollments.studentId, studentId), eq(studentEnrollments.tuitionId, tuitionId)));
+    return enrollment;
+  }
+
+  // Tuition Payments
+  async recordPayment(payment: InsertTuitionPayment): Promise<TuitionPayment> {
+    const [newPayment] = await db.insert(tuitionPayments).values(payment).returning();
+    return newPayment;
+  }
+
+  async getTutorPayments(tutorId: number): Promise<(TuitionPayment & { student: User, tuition: Tuition })[]> {
+    const results = await db
+      .select()
+      .from(tuitionPayments)
+      .innerJoin(users, eq(tuitionPayments.studentId, users.id))
+      .innerJoin(tuitions, eq(tuitionPayments.tuitionId, tuitions.id))
+      .where(eq(tuitionPayments.tutorId, tutorId))
+      .orderBy(desc(tuitionPayments.createdAt));
+    
+    return results.map(r => ({
+      ...r.tuition_payments,
+      student: r.users,
+      tuition: r.tuitions
+    }));
+  }
+
+  async getStudentPayments(studentId: number): Promise<(TuitionPayment & { tutor: User, tuition: Tuition })[]> {
+    const results = await db
+      .select()
+      .from(tuitionPayments)
+      .innerJoin(users, eq(tuitionPayments.tutorId, users.id))
+      .innerJoin(tuitions, eq(tuitionPayments.tuitionId, tuitions.id))
+      .where(eq(tuitionPayments.studentId, studentId))
+      .orderBy(desc(tuitionPayments.createdAt));
+    
+    return results.map(r => ({
+      ...r.tuition_payments,
+      tutor: r.users,
+      tuition: r.tuitions
+    }));
+  }
+
+  async markPaymentAsReceived(paymentId: number): Promise<TuitionPayment | undefined> {
+    const [updated] = await db
+      .update(tuitionPayments)
+      .set({ status: "paid", paidDate: new Date() })
+      .where(eq(tuitionPayments.id, paymentId))
+      .returning();
+    return updated;
+  }
+
+  async getTutorAnalytics(tutorId: number): Promise<{
+    totalStudents: number;
+    enrollmentsByTuition: { tuitionId: number; subject: string; count: number }[];
+    monthlyRevenue: { month: string; amount: number }[];
+    expectedIncome: number;
+    incomeThisMonth: number;
+    pendingFees: number;
+  }> {
+    // Get total unique students enrolled
+    const enrollmentResults = await db
+      .select({ studentId: studentEnrollments.studentId })
+      .from(studentEnrollments)
+      .where(eq(studentEnrollments.tutorId, tutorId));
+    
+    const totalStudents = new Set(enrollmentResults.map(e => e.studentId)).size;
+
+    // Get enrollments by tuition
+    const enrollmentsByTuition = await db
+      .select({
+        tuitionId: studentEnrollments.tuitionId,
+        subject: tuitions.subject,
+        count: count(studentEnrollments.id)
+      })
+      .from(studentEnrollments)
+      .innerJoin(tuitions, eq(studentEnrollments.tuitionId, tuitions.id))
+      .where(eq(studentEnrollments.tutorId, tutorId))
+      .groupBy(studentEnrollments.tuitionId, tuitions.subject);
+
+    // Get monthly revenue for last 6 months
+    const now = new Date();
+    const currentMonth = now.toISOString().slice(0, 7); // Format: YYYY-MM
+    const sixMonthsAgo = new Date(new Date().setMonth(now.getMonth() - 6));
+    
+    const monthlyPayments = await db
+      .select({
+        month: tuitionPayments.month,
+        amount: tuitionPayments.amount
+      })
+      .from(tuitionPayments)
+      .where(and(
+        eq(tuitionPayments.tutorId, tutorId),
+        eq(tuitionPayments.status, "paid"),
+        gte(tuitionPayments.paidDate, sixMonthsAgo)
+      ));
+
+    // Aggregate monthly revenue
+    const monthlyRevenueMap = new Map<string, number>();
+    monthlyPayments.forEach(payment => {
+      if (payment.month) {
+        monthlyRevenueMap.set(
+          payment.month,
+          (monthlyRevenueMap.get(payment.month) || 0) + payment.amount
+        );
+      }
+    });
+
+    const monthlyRevenue = Array.from(monthlyRevenueMap.entries())
+      .map(([month, amount]) => ({ month, amount }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    // Calculate Expected Income = sum of all active tuition fees for this month
+    const activeEnrollments = await db
+      .select({
+        tuitionId: studentEnrollments.tuitionId,
+        fees: tuitions.fees
+      })
+      .from(studentEnrollments)
+      .innerJoin(tuitions, eq(studentEnrollments.tuitionId, tuitions.id))
+      .where(and(
+        eq(studentEnrollments.tutorId, tutorId),
+        eq(studentEnrollments.status, "active")
+      ));
+
+    const expectedIncome = activeEnrollments.reduce((sum, enrollment) => sum + (enrollment.fees || 0), 0);
+
+    // Get fees received this month (paid)
+    const thisMonthPayments = await db
+      .select({ amount: tuitionPayments.amount })
+      .from(tuitionPayments)
+      .where(and(
+        eq(tuitionPayments.tutorId, tutorId),
+        eq(tuitionPayments.status, "paid"),
+        eq(tuitionPayments.month, currentMonth)
+      ));
+
+    const incomeThisMonth = thisMonthPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    // Pending fees = Expected Income - Income This Month
+    const pendingFees = expectedIncome - incomeThisMonth;
+
+    return {
+      totalStudents,
+      enrollmentsByTuition: enrollmentsByTuition as any,
+      monthlyRevenue,
+      expectedIncome,
+      incomeThisMonth,
+      pendingFees
     };
   }
 }
@@ -369,7 +829,7 @@ class MemoryStorage implements IStorage {
     if (filters?.location) results = results.filter(r => r.location && r.location.includes(filters.location));
     if (filters?.subject) results = results.filter(r => r.tutorProfile.subjects?.some((s: string) => s.toLowerCase().includes(filters.subject!.toLowerCase())));
     if (filters?.mode) results = results.filter(r => r.tutorProfile.mode === filters.mode);
-    if ((filters as any)?.maxBudget != null) results = results.filter(r => (r.tutorProfile.hourlyRate ?? Infinity) <= (filters as any).maxBudget);
+    if ((filters as any)?.maxBudget != null) results = results.filter(r => (r.tutorProfile.monthlyRate ?? Infinity) <= (filters as any).maxBudget);
     if ((filters as any)?.time) results = results.filter(r => (r.tutorProfile.timings || "").toLowerCase().includes(((filters as any).time as string).toLowerCase()));
     return results;
   }
@@ -385,10 +845,35 @@ class MemoryStorage implements IStorage {
     return [];
   }
 
+  async getJob(id: number): Promise<(Job & { institution: User }) | undefined> {
+    return undefined;
+  }
+
   async createApplication(app: any): Promise<Application> {
     const a: any = { ...app, id: this.idCounter++ };
     this.applications.push(a);
     return a;
+  }
+
+  async createJobFeedback(feedback: Omit<InsertJobFeedback, "userId"> & { userId: number }): Promise<JobFeedback> {
+    const f: any = { ...feedback, id: this.idCounter++, createdAt: new Date() };
+    return f;
+  }
+
+  async getFeedbackForJob(jobId: number): Promise<JobFeedback[]> {
+    return [];
+  }
+
+  async getJobFeedbackByUserAndJob(jobId: number, userId: number): Promise<JobFeedback | undefined> {
+    return undefined;
+  }
+
+  async updateJobFeedback(feedbackId: number, updates: Partial<Omit<JobFeedback, 'id' | 'jobId' | 'userId'>>): Promise<JobFeedback | undefined> {
+    throw new Error("MemoryStorage: updateJobFeedback not implemented");
+  }
+
+  async deleteJobFeedback(feedbackId: number): Promise<void> {
+    throw new Error("MemoryStorage: deleteJobFeedback not implemented");
   }
 
   // Books
@@ -437,6 +922,56 @@ class MemoryStorage implements IStorage {
     this.booksArr = this.booksArr.filter(b => b.id !== id);
   }
 
+  // New methods for profile management
+  async getBook(id: number): Promise<(Book & { seller: User }) | undefined> {
+    const book = this.booksArr.find(b => b.id === id);
+    if (!book) return undefined;
+    const seller = this.users.find(u => u.id === book.sellerId);
+    return seller ? { ...book, seller } : undefined;
+  }
+
+  async getUserBooks(userId: number): Promise<(Book & { seller: User })[]> {
+    const userBooks = this.booksArr.filter(b => b.sellerId === userId);
+    const seller = this.users.find(u => u.id === userId);
+    return seller ? userBooks.map(b => ({ ...b, seller })) : [];
+  }
+
+  async getUserJobs(userId: number): Promise<(Job & { institution: User })[]> {
+    const userJobs = this.jobs.filter(j => j.institutionId === userId);
+    const institution = this.users.find(u => u.id === userId);
+    return institution ? userJobs.map(j => ({ ...j, institution })) : [];
+  }
+
+  async getUserApplications(userId: number): Promise<Application[]> {
+    return this.applications.filter(a => a.teacherId === userId);
+  }
+
+  async getUserJobFeedback(userId: number): Promise<JobFeedback[]> {
+    return [];  // Not implemented in memory storage
+  }
+
+  async getJobFeedback(id: number): Promise<JobFeedback | undefined> {
+    return undefined;  // Not implemented in memory storage
+  }
+
+  async deleteUserContent(userId: number): Promise<void> {
+    // Close to a no-op, but could clear user's books and applications
+    this.booksArr = this.booksArr.filter(b => b.sellerId !== userId);
+    this.applications = this.applications.filter(a => a.teacherId !== userId);
+  }
+
+  async getReview(id: number): Promise<Review | undefined> {
+    return undefined;  // Not implemented in memory storage
+  }
+
+  async getUserTutorReviews(userId: number): Promise<Review[]> {
+    return [];  // Not implemented in memory storage
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    // No-op in memory storage
+  }
+
   async getStats(): Promise<{ users: number; tutors: number; jobs: number; books: number }> {
     return {
       users: this.users.length,
@@ -445,6 +980,50 @@ class MemoryStorage implements IStorage {
       books: this.booksArr.length,
     };
   }
+
+  // Institution Profiles (stubs for MemoryStorage)
+  async createInstitutionProfile(profile: InsertInstitutionProfile): Promise<InstitutionProfile> {
+    throw new Error("MemoryStorage: createInstitutionProfile not implemented");
+  }
+
+  async updateInstitutionProfile(userId: number, updates: Partial<InsertInstitutionProfile>): Promise<InstitutionProfile | undefined> {
+    throw new Error("MemoryStorage: updateInstitutionProfile not implemented");
+  }
+
+  async getInstitutionProfile(userId: number): Promise<InstitutionProfile | undefined> {
+    return undefined;
+  }
+
+  async getInstitutions(filters?: { location?: string, type?: string }): Promise<(User & { institutionProfile: InstitutionProfile })[]> {
+    return [];
+  }
+
+  // Tuitions stubs
+  async createTuition(tuition: InsertTuition): Promise<Tuition> { throw new Error("Not implemented"); }
+  async getTuitionsByTutor(tutorId: number): Promise<Tuition[]> { return []; }
+  async getAllTuitions(): Promise<(Tuition & { tutor: User })[]> { return []; }
+  async getTuition(id: number): Promise<Tuition | undefined> { return undefined; }
+  async updateTuition(id: number, updates: Partial<InsertTuition>): Promise<Tuition | undefined> { return undefined; }
+  async deleteTuition(id: number): Promise<void> {}
+
+  // Student Enrollments stubs
+  async enrollStudent(enrollment: InsertStudentEnrollment): Promise<StudentEnrollment> { throw new Error("Not implemented"); }
+  async getStudentEnrollments(studentId: number): Promise<(StudentEnrollment & { tuition: Tuition & { tutor: User } })[]> { return []; }
+  async getTutorEnrollments(tutorId: number): Promise<(StudentEnrollment & { student: User, tuition: Tuition })[]> { return []; }
+  async getEnrollmentsByTuition(tuitionId: number): Promise<(StudentEnrollment & { student: User })[]> { return []; }
+  async removeEnrollment(enrollmentId: number): Promise<void> {}
+  async getEnrollment(studentId: number, tuitionId: number): Promise<StudentEnrollment | undefined> { return undefined; }
+
+  // Tuition Payments stubs
+  async recordPayment(payment: InsertTuitionPayment): Promise<TuitionPayment> { throw new Error("Not implemented"); }
+  async getTutorPayments(tutorId: number): Promise<(TuitionPayment & { student: User, tuition: Tuition })[]> { return []; }
+  async getStudentPayments(studentId: number): Promise<(TuitionPayment & { tutor: User, tuition: Tuition })[]> { return []; }
+  async getTutorAnalytics(tutorId: number): Promise<any> { return { totalStudents: 0, enrollmentsByTuition: [], monthlyRevenue: [], expectedIncome: 0, incomeThisMonth: 0, pendingFees: 0 }; }
+  async markPaymentAsReceived(paymentId: number): Promise<TuitionPayment | undefined> { return undefined; }
+
+  // Review stubs
+  async getReviewByStudentAndTutor(studentId: number, tutorId: number): Promise<Review | undefined> { return undefined; }
+  async updateReview(id: number, updates: { rating: number; comment: string }): Promise<Review> { throw new Error("Not implemented"); }
 }
 
 // Export a proxy storage that delegates to DatabaseStorage but falls back to MemoryStorage

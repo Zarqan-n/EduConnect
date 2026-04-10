@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import {
   insertUserSchema, insertTutorProfileSchema, insertJobSchema,
-  insertApplicationSchema, insertBookSchema, insertReviewSchema,
-  users, tutorProfiles, jobs, applications, books, reviews,
-  type InsertUser, type InsertTutorProfile, type InsertJob, type InsertBook, type InsertReview,
-  type User, type TutorProfile, type Job, type Application, type Book, type Review
+  insertApplicationSchema, insertBookSchema, insertReviewSchema, insertJobFeedbackSchema,
+  users, tutorProfiles, jobs, applications, books, reviews, jobFeedback,
+  type InsertUser, type InsertTutorProfile, type InsertJob, type InsertBook, type InsertReview, type InsertJobFeedback,
+  type User, type TutorProfile, type Job, type Application, type Book, type Review, type JobFeedback
 } from './schema';
 
 export const errorSchemas = {
@@ -132,6 +132,43 @@ export const api = {
         201: z.custom<typeof applications.$inferSelect>(),
         400: errorSchemas.validation,
       }
+    },
+    get: {
+      method: 'GET' as const,
+      path: '/api/jobs/:id' as const,
+      responses: {
+        200: z.custom<typeof jobs.$inferSelect & { institution: typeof users.$inferSelect }>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/jobs/:id' as const,
+      input: z.object({
+        status: z.enum(['open', 'closed']).optional(),
+      }),
+      responses: {
+        200: z.custom<typeof jobs.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    feedback: {
+      list: {
+        method: 'GET' as const,
+        path: '/api/jobs/:id/feedback' as const,
+        responses: {
+          200: z.array(z.custom<typeof jobFeedback.$inferSelect>()),
+        },
+      },
+      create: {
+        method: 'POST' as const,
+        path: '/api/jobs/:id/feedback' as const,
+        input: insertJobFeedbackSchema.omit({ userId: true, jobId: true }),
+        responses: {
+          201: z.custom<typeof jobFeedback.$inferSelect>(),
+          400: errorSchemas.validation,
+        }
+      }
     }
   },
   books: {
@@ -222,4 +259,4 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
 }
 
 // Re-export types for use in client code
-export type { InsertUser, InsertTutorProfile, InsertJob, InsertBook, InsertReview, User, TutorProfile, Job, Application, Book, Review };
+export type { InsertUser, InsertTutorProfile, InsertJob, InsertBook, InsertReview, InsertJobFeedback, User, TutorProfile, Job, Application, Book, Review, JobFeedback };

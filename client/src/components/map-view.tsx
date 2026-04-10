@@ -1,12 +1,38 @@
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
+import { MapSectionSkeleton } from "@/components/app-skeletons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, BookOpen, Building2, Star, DollarSign } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+// Add pulsing animation styles
+const pulseStyles = `
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+  }
+  .user-marker-pulse {
+    animation: pulse-ring 2s infinite;
+  }
+`;
+
+// Inject styles
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = pulseStyles;
+  document.head.appendChild(style);
+}
 
 interface MapMarker {
   id: number;
@@ -54,6 +80,13 @@ const getInstitutionIcon = () => {
   const svg = renderToStaticMarkup(<Building2 className="w-4 h-4" />);
   const html = `<div style="background:#f59e0b;color:white;${baseStyle}">${svg}</div>`;
   return L.divIcon({ className: "custom-marker institution-marker", html, iconSize: [32, 32] });
+};
+
+const getUserIcon = () => {
+  const userStyle = "width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);";
+  const svg = renderToStaticMarkup(<Users className="w-3 h-3" />);
+  const html = `<div class="user-marker-pulse" style="background:#ef4444;color:white;${userStyle}">${svg}</div>`;
+  return L.divIcon({ className: "custom-marker user-marker", html, iconSize: [24, 24] });
 };
 
 const getMarkerIcon = (type: "tutor" | "seller" | "institution" | "student") => {
@@ -115,16 +148,7 @@ export function MapView({
   }, [markers, distanceFilter]);
 
   if (loading) {
-    return (
-      <Card className="w-full h-96">
-        <CardContent className="h-full flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Loading map...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <MapSectionSkeleton />;
   }
 
   return (
@@ -160,6 +184,12 @@ export function MapView({
                   weight: 2,
                   className: "search-radius-circle"
                 }}
+              />
+
+              {/* User Location Marker */}
+              <Marker
+                position={center as LatLngExpression}
+                icon={getUserIcon()}
               />
 
               {/* Markers */}

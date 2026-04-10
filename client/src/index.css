@@ -20,37 +20,37 @@ html {
   --font-sans: 'Plus Jakarta Sans', sans-serif;
   --font-heading: 'Outfit', sans-serif;
 
-  /* Fresh, trustworthy educational palette */
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
+  /* Premium color palette - sophisticated and professional */
+  --background: 210 35% 97%;
+  --foreground: 225 12% 15%;
   
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 225 12% 15%;
   
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 225 12% 15%;
   
-  /* Primary: A vibrant, intellectual blue/indigo */
-  --primary: 230 75% 55%;
+  /* Primary: Deep indigo-blue for trust and professionalism */
+  --primary: 225 85% 50%;
   --primary-foreground: 210 40% 98%;
   
-  /* Secondary: Soft lavender/gray for balance */
-  --secondary: 230 20% 96%;
-  --secondary-foreground: 222 47% 11%;
+  /* Secondary: Purple-tinted gray for premium feel */
+  --secondary: 240 15% 92%;
+  --secondary-foreground: 225 12% 15%;
   
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted: 210 30% 94%;
+  --muted-foreground: 215 15% 50%;
   
-  /* Accent: A warm coral/orange for CTAs and highlights */
-  --accent: 25 95% 60%;
+  /* Accent: Vibrant gradient-ready orange */
+  --accent: 30 100% 50%;
   --accent-foreground: 210 40% 98%;
   
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 230 75% 55%;
+  --border: 220 25% 88%;
+  --input: 220 25% 90%;
+  --ring: 225 85% 50%;
   
   --radius: 0.75rem;
 }
@@ -98,6 +98,54 @@ html {
     @apply font-bold tracking-tight;
   }
 }
+
+/* Premium gradient utilities */
+@layer components {
+  .gradient-hero {
+    @apply bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50;
+  }
+
+  .gradient-premium {
+    @apply bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500;
+  }
+
+  .gradient-primary-accent {
+    @apply bg-gradient-to-r from-blue-600 to-orange-500;
+  }
+
+  .gradient-soft {
+    @apply bg-gradient-to-r from-slate-100 to-slate-50;
+  }
+
+  .gradient-card {
+    @apply bg-gradient-to-br from-white via-slate-50 to-blue-50;
+  }
+
+  .gradient-button-primary {
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all;
+  }
+
+  .gradient-button-accent {
+    @apply bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all;
+  }
+
+  .gradient-button-success {
+    @apply bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all;
+  }
+
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/80 border border-white/30 shadow-2xl;
+  }
+
+  .premium-shadow {
+    @apply shadow-2xl shadow-blue-500/10;
+  }
+
+  .header-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600;
+  }
+}
+
 
 /* Custom Utilities */
 @layer utilities {
@@ -339,4 +387,18 @@ html {
   50% {
     background-position: 100% 50%;
   }
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.animate-shine {
+  position: absolute;
+  animation: shine 2.5s linear infinite;
 }

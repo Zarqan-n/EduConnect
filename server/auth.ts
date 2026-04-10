@@ -63,7 +63,7 @@ export async function setupAuth(app: Express) {
     sessionSettings.cookie = {
       ...sessionSettings.cookie,
       secure: true,
-      sameSite: "none",
+      sameSite: "lax",
     };
   }
 
@@ -105,4 +105,16 @@ export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${derivedKey.toString("hex")}.${salt}`;
+}
+
+export async function verifyPassword(password: string, hashedPassword: string) {
+  const [storedHash, salt] = hashedPassword.split(".");
+  const hashedPasswordBuf = Buffer.from(storedHash, "hex");
+  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
+
+  try {
+    return timingSafeEqual(hashedPasswordBuf, derivedKey);
+  } catch {
+    return false;
+  }
 }

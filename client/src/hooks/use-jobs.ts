@@ -62,3 +62,30 @@ export function useApplyJob() {
     },
   });
 }
+
+export function useUpdateJob() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ jobId, status }: { jobId: number; status: 'open' | 'closed' }) => {
+      const url = buildUrl(api.jobs.update.path, { id: jobId });
+      const res = await fetch(url, {
+        method: api.jobs.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update job");
+      return api.jobs.update.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.jobs.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["user-content"] });
+      toast({
+        title: "Job Updated",
+        description: "Job status has been updated successfully.",
+      });
+    },
+  });
+}

@@ -8,7 +8,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Do not set a fixed PORT; Render provides the correct PORT at runtime.
       - key: DATABASE_URL
         fromDatabase:
           name: educonnect-db
@@ -20,4 +19,5 @@ databases:
   - name: educonnect-db
     databaseName: educonnect
     user: educonnect_user
+    plan: free
     ipAllowList: []

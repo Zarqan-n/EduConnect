@@ -139,3 +139,52 @@ export function useTutorProfile(userId?: number) {
     enabled: !!userId,
   });
 }
+
+export function useReviews(tutorId?: number) {
+  return useQuery({
+    queryKey: ["tutorReviews", tutorId],
+    queryFn: async () => {
+      if (!tutorId) return [];
+      const res = await fetch(`/api/tutors/${tutorId}/reviews`);
+      if (!res.ok) throw new Error("Failed to fetch reviews");
+      return res.json();
+    },
+    enabled: !!tutorId,
+  });
+}
+
+export function useSubmitReview() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ tutorId, rating, comment }: { tutorId: number; rating: number; comment: string }) => {
+      const res = await fetch(`/api/tutors/${tutorId}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comment }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ message: "Failed to submit review" }));
+        throw new Error(body.message);
+      }
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["tutorReviews", variables.tutorId] });
+      queryClient.invalidateQueries({ queryKey: [api.tutors.get.path, variables.tutorId] });
+      queryClient.invalidateQueries({ queryKey: [api.tutors.list.path] });
+      toast({
+        title: "Review Submitted",
+        description: "Thank you for your feedback!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+}
