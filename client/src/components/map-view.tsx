@@ -4,7 +4,7 @@ import { LatLngExpression } from "leaflet";
 import { MapSectionSkeleton } from "@/components/app-skeletons";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, BookOpen, Building2, Star, DollarSign } from "lucide-react";
+import { Users, BookOpen, Building2, Star, DollarSign, MapPin } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -210,8 +210,8 @@ export function MapView({
                           {marker.type}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        📍 {marker.distance.toFixed(1)} km away
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {marker.distance.toFixed(1)} km away
                       </p>
                       {marker.details && (
                         <div className="text-xs space-y-1 bg-secondary/30 p-2 rounded">
@@ -221,8 +221,8 @@ export function MapView({
                             </p>
                           )}
                           {marker.details.subjects && marker.details.subjects.length > 0 && (
-                            <p className="text-xs">
-                              📚 {marker.details.subjects.slice(0, 2).join(", ")}
+                            <p className="text-xs flex items-center gap-1">
+                              <BookOpen className="w-3 h-3" /> {marker.details.subjects.slice(0, 2).join(", ")}
                               {marker.details.subjects.length > 2 && ` +${marker.details.subjects.length - 2}`}
                             </p>
                           )}

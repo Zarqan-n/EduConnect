@@ -7,7 +7,7 @@ import { useCreateTutorProfile, useUpdateTutorProfile, useTutorProfile } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Settings, UserCircle, Briefcase, Book, Loader2 } from "lucide-react";
+import { Bot, Settings, UserCircle, Briefcase, Book, Loader2, BarChart3, GraduationCap } from "lucide-react";
 import { useState, useEffect, Suspense, lazy } from "react";
 import { StudentDashboard } from "@/components/student-dashboard";
 import { TeacherAnalyticsDashboard } from "@/components/teacher-analytics";
@@ -87,7 +87,7 @@ export default function TeacherDashboardPage() {
         <div className="mt-6">
           <Card className="card-hover animate-scale-in bg-gradient-to-br from-indigo-50/50 to-violet-50/30 border-indigo-200 border-l-4 border-l-indigo-500">
             <CardHeader>
-              <CardTitle className="text-indigo-900">📊 Your Tuition Analytics</CardTitle>
+              <CardTitle className="text-indigo-900 flex items-center gap-2"><BarChart3 className="w-5 h-5" /> Your Tuition Analytics</CardTitle>
               <CardDescription className="text-indigo-800">
                 View your enrolled students, fees received, and revenue trends
               </CardDescription>
@@ -107,7 +107,7 @@ export default function TeacherDashboardPage() {
 
         {/* Find Students Section - Lazy loaded */}
         <div className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">🎓 Find Students</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2"><GraduationCap className="w-6 h-6" /> Find Students</h2>
           <Suspense fallback={<DashboardPageSkeleton />}>
             <StudentDashboard showStudents={true} title="Students Nearby" description="Locate students for in-person sessions" />
           </Suspense>

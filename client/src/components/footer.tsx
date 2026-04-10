@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Heart } from "lucide-react";
 import Logo from "../Assets/Logo (2).png";
 
 export function Footer() {
@@ -172,7 +172,7 @@ export function Footer() {
         {/* Bottom Message */}
         <div className="pt-6 border-t border-primary/20 text-center group">
           <p className="text-xs text-muted-foreground font-semibold tracking-wide">
-            Made with <span className="text-primary inline-block group-hover:scale-125 transition-transform duration-600 animate-pulse">❤️</span> for learners and educators worldwide
+            Made with <Heart className="text-primary inline-block w-4 h-4 group-hover:scale-125 transition-transform duration-600 animate-pulse fill-current" /> for learners and educators worldwide
           </p>
         </div>
       </div>

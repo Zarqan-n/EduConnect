@@ -21,7 +21,7 @@ const cfg = cloudinary.config();
 if (cfg.cloud_name) {
   console.log(`Cloudinary configured: cloud_name=${cfg.cloud_name}`);
 } else {
-  console.warn("⚠️ Cloudinary not configured — file uploads will fail. Set CLOUDINARY_URL in .env");
+  console.warn("[!] Cloudinary not configured — file uploads will fail. Set CLOUDINARY_URL in .env");
 }
 
 export default cloudinary;

@@ -317,7 +317,7 @@ function AdminDashboard() {
                                                                 {b.condition?.replace("_", " ")}
                                                             </span>
                                                         </td>
-                                                        <td className="py-3 px-4">{b.sold ? "✅ Yes" : "No"}</td>
+                                                        <td className="py-3 px-4"><CheckCircle2 className="inline w-4 h-4 text-green-600" /> {b.sold ? "Yes" : "No"}</td>
                                                         <td className="py-3 px-4 text-right">
                                                             <DeleteButton
                                                                 label="Delete Book"

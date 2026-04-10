@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, MapPin, Building2 } from "lucide-react";
+import { Briefcase, MapPin, Building2, CheckCircle2, Clock } from "lucide-react";
 
 export default function JobsPage() {
   const [query, setQuery] = useState("");
@@ -78,12 +78,12 @@ function JobCard({ job, userRole, onDetailsClick }: { job: any, userRole?: strin
       {/* Status Badge - Positioned at top right */}
       <div className="absolute top-4 right-4 z-20">
         {job.status === "open" ? (
-          <Badge className="text-green-700 border-green-400 bg-green-100 border font-semibold shadow-lg animate-pulse">
-            🟢 Actively Hiring
+          <Badge className="text-green-700 border-green-400 bg-green-100 border font-semibold shadow-lg animate-pulse flex items-center gap-1">
+            <CheckCircle2 className="w-4 h-4" /> Actively Hiring
           </Badge>
         ) : (
-          <Badge className="bg-gray-300 text-gray-800 font-semibold shadow-lg">
-            ✓ Closed
+          <Badge className="bg-gray-300 text-gray-800 font-semibold shadow-lg flex items-center gap-1">
+            <CheckCircle2 className="w-4 h-4" /> Closed
           </Badge>
         )}
       </div>
@@ -116,15 +116,15 @@ function JobCard({ job, userRole, onDetailsClick }: { job: any, userRole?: strin
           {(job.workingTimeStart || job.workingTimeEnd || job.workingDays) && (
             <div className="flex flex-wrap gap-4 text-sm text-orange-700 pt-2 border-t border-orange-100">
               {(job.workingTimeStart || job.workingTimeEnd) && (
-                <div className="flex items-center">
-                  <span className="font-semibold">⏰</span>
-                  <span className="ml-1.5">{job.workingTimeStart || "N/A"} - {job.workingTimeEnd || "N/A"}</span>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 font-semibold" />
+                  <span>{job.workingTimeStart || "N/A"} - {job.workingTimeEnd || "N/A"}</span>
                 </div>
               )}
               {job.workingDays && (
-                <div className="flex items-center">
-                  <span className="font-semibold">📅</span>
-                  <span className="ml-1.5">{job.workingDays}</span>
+                <div className="flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4 font-semibold" />
+                  <span>{job.workingDays}</span>
                 </div>
               )}
             </div>

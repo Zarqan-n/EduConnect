@@ -39,7 +39,7 @@ export async function setupAuth(app: Express) {
     client.release();
 
     store = new PostgresqlStore({
-      pool   // ✅ ONLY pool
+      pool   // PostgreSQL connection pool instance
     });
 
   } catch (err: any) {

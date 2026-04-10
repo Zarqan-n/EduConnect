@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, Settings, UserCircle, Briefcase, Book } from "lucide-react";
+import { Bot, Settings, UserCircle, Briefcase, Book, GraduationCap } from "lucide-react";
 import { StudentDashboard } from "@/components/student-dashboard";
 import { StudentEnrolledTutors } from "@/components/student-enrolled-tutors";
 import { DashboardPageSkeleton, StatCardSkeleton } from "@/components/dashboard-skeletons";
@@ -89,7 +89,7 @@ export default function StudentDashboardPage() {
 
         {/* Explore Tuitions Section - Lazy loaded */}
         <div className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">🎓 Browse Tuitions</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2"><GraduationCap className="w-6 h-6" /> Browse Tuitions</h2>
           <Suspense fallback={<DashboardPageSkeleton />}>
             <StudentDashboard />
           </Suspense>

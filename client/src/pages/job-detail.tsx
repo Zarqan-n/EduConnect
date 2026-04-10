@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Loader2, MapPin, Briefcase, Building2, ArrowLeft, Star, GraduationCap,
-  MessageSquare, CreditCard, Send, CheckCircle2, FileText, Users, Target, DollarSign, BookOpen
+  MessageSquare, CreditCard, Send, CheckCircle2, FileText, Users, Target, DollarSign, BookOpen, Clock, AlertCircle, TrendingUp
 } from "lucide-react";
 
 export default function JobDetailPage() {
@@ -121,12 +121,12 @@ export default function JobDetailPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {job.status === "open" ? (
-                    <Badge className="text-green-700 bg-green-100 border-green-300 border font-semibold shadow-sm">
-                      🟢 Actively Hiring
+                    <Badge className="text-green-700 bg-green-100 border-green-300 border font-semibold shadow-sm flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" /> Actively Hiring
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="bg-gray-300 text-gray-800">
-                      ❌ Closed
+                    <Badge variant="secondary" className="bg-gray-300 text-gray-800 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> Closed
                     </Badge>
                   )}
                 </div>
@@ -198,13 +198,13 @@ export default function JobDetailPage() {
                     <div className="grid grid-cols-2 gap-4">
                       {(job.workingTimeStart || job.workingTimeEnd) && (
                         <div>
-                          <h4 className="text-sm font-medium text-orange-900 mb-1">⏰ Working Hours</h4>
+                          <h4 className="text-sm font-medium text-orange-900 mb-1 flex items-center gap-1"><Clock className="w-4 h-4" /> Working Hours</h4>
                           <p className="text-muted-foreground">{job.workingTimeStart || "N/A"} - {job.workingTimeEnd || "N/A"}</p>
                         </div>
                       )}
                       {job.workingDays && (
                         <div>
-                          <h4 className="text-sm font-medium text-orange-900 mb-1">📅 Working Days</h4>
+                          <h4 className="text-sm font-medium text-orange-900 mb-1 flex items-center gap-1"><Briefcase className="w-4 h-4" /> Working Days</h4>
                           <p className="text-muted-foreground">{job.workingDays}</p>
                         </div>
                       )}
@@ -226,7 +226,7 @@ export default function JobDetailPage() {
                     {(() => {
                       if (recentOtherFeedback.length === 0) return "No other ratings yet";
                       const avgRating = (recentOtherFeedback.reduce((sum, fb) => sum + fb.rating, 0) / recentOtherFeedback.length).toFixed(1);
-                      return `${avgRating} ⭐ from ${recentOtherFeedback.length} recent ${recentOtherFeedback.length === 1 ? "user" : "users"}`;
+                      return `${avgRating} rating from ${recentOtherFeedback.length} recent ${recentOtherFeedback.length === 1 ? "user" : "users"}`;
                     })()}
                   </CardDescription>
                 )}

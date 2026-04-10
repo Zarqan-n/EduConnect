@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Filter, MapPin, Loader2, Plus, Upload, X } from "lucide-react";
+import { BookOpen, Filter, MapPin, Loader2, Plus, Upload, X, Book } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertBookSchema } from "@shared/schema";
@@ -18,6 +18,10 @@ export default function BooksPage() {
   const [filters, setFilters] = useState({ subject: "", classLevel: "" });
   const [showListForm, setShowListForm] = useState(false);
   const { data: books, isLoading } = useBooks(filters);
+
+  const handleFormClose = () => {
+    setShowListForm(false);
+  };
 
   return (
     <LayoutShell>
@@ -53,7 +57,7 @@ export default function BooksPage() {
               {showListForm ? "Hide Form" : "List Book Now"}
             </Button>
           </div>
-          {showListForm && <SellerActions />}
+          {showListForm && <SellerActions onSubmitSuccess={handleFormClose} />}
         </div>
 
         {isLoading ? (
@@ -82,32 +86,80 @@ function BookCard({ book }: { book: any }) {
   // Use book.imageUrl if available, else a placeholder with subject text
   const image = book.imageUrl || `https://placehold.co/400x300/e2e8f0/1e293b?text=${encodeURIComponent(book.subject || 'Book')}`;
 
+  // Condition display helper
+  const conditionColors: Record<string, string> = {
+    "new": "bg-emerald-100 text-emerald-700",
+    "like_new": "bg-teal-100 text-teal-700",
+    "good": "bg-blue-100 text-blue-700",
+    "fair": "bg-amber-100 text-amber-700",
+    "poor": "bg-orange-100 text-orange-700"
+  };
+
+  const conditionLabel: Record<string, string> = {
+    "new": "New",
+    "like_new": "Like New",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor"
+  };
+
   return (
-    <Card className="group overflow-hidden border-border/60 card-hover card-book border-l-4 border-l-green-400 hover:border-l-green-600 transition-colors">
+    <Card className="group overflow-hidden border-border/60 card-hover card-book border-l-4 border-l-green-400 hover:border-l-green-600 transition-colors flex flex-col h-full">
       <div className="aspect-[4/3] overflow-hidden bg-secondary relative bg-gradient-to-br from-green-100/30 to-transparent">
         <img 
           src={image} 
           alt={book.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute top-2 right-2 animate-slide-in-from-right">
-          <Badge className="bg-green-600 text-white backdrop-blur font-bold shadow-sm hover:bg-green-700 transition-all duration-300">
+        <div className="absolute top-2 right-2 animate-slide-in-from-right flex flex-col gap-2">
+          <Badge className="bg-green-600 text-white backdrop-blur font-bold shadow-sm hover:bg-green-700 transition-all duration-300 text-base px-3 py-1">
             ₹{book.price}
           </Badge>
+          {book.condition && (
+            <Badge className={`${conditionColors[book.condition] || 'bg-gray-100 text-gray-700'} backdrop-blur font-medium shadow-sm text-xs`}>
+              {conditionLabel[book.condition] || book.condition}
+            </Badge>
+          )}
         </div>
       </div>
       
-      <CardContent className="p-4 space-y-2 bg-gradient-to-b from-green-50/50 to-transparent">
-        <h3 className="font-bold text-lg leading-tight line-clamp-1 group-hover:text-green-700 transition-colors duration-300">{book.title}</h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 transition-colors duration-300">{book.description || "No description provided."}</p>
-        
-        {(book.seller?.location || book.location) && (
-          <div className="flex items-center text-xs text-green-700 gap-1 pt-1 font-medium">
-            <MapPin className="w-3 h-3" />
-            <span>{book.seller?.location || book.location}</span>
+      <CardContent className="p-4 space-y-3 bg-gradient-to-b from-green-50/50 to-transparent flex-1 flex flex-col">
+        <div>
+          <h3 className="font-bold text-lg leading-tight line-clamp-2 group-hover:text-green-700 transition-colors duration-300">
+            {book.title}
+          </h3>
+        </div>
+
+        {/* Subject and Class Level */}
+        {(book.subject || book.classLevel) && (
+          <div className="space-y-1 text-xs">
+            {book.subject && (
+              <p className="text-green-700 font-semibold flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5" /> Subject: <span className="text-gray-700 font-normal">{book.subject}</span>
+              </p>
+            )}
+            {book.classLevel && (
+              <p className="text-green-700 font-semibold flex items-center gap-1">
+                <Book className="w-3.5 h-3.5" /> Class/Grade: <span className="text-gray-700 font-normal">{book.classLevel}</span>
+              </p>
+            )}
           </div>
         )}
-        
+
+        {/* Location */}
+        {(book.seller?.location || book.location) && (
+          <div className="flex items-center text-xs text-green-700 gap-1 font-medium">
+            <MapPin className="w-3 h-3 flex-shrink-0" />
+            <span className="line-clamp-1">{book.seller?.location || book.location}</span>
+          </div>
+        )}
+
+        {/* Description */}
+        {book.description && (
+          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed italic">
+            "{book.description}"
+          </p>
+        )}
       </CardContent>
       
       <CardFooter className="p-4 pt-0">
@@ -132,7 +184,7 @@ function BookCard({ book }: { book: any }) {
   );
 }
 
-function SellerActions() {
+function SellerActions({ onSubmitSuccess }: { onSubmitSuccess?: () => void }) {
   const createBook = useCreateBook();
   const uploadBookCover = useUploadBookCover();
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
@@ -187,12 +239,13 @@ function SellerActions() {
         form.reset();
         setUploadedImageUrl(null);
         setPreviewUrl(null);
+        onSubmitSuccess?.();
       }
     });
   };
 
   return (
-    <Card className="bg-gradient-to-br from-green-50/50 to-emerald-50/30 border-green-200 border-l-4 border-l-green-500">
+    <Card className="bg-gradient-to-br from-green-50/50 to-emerald-50/30 border-green-200 border-l-4 border-l-green-500 animate-slide-in-from-top">
       <CardHeader>
         <CardTitle className="text-green-900">List a Book</CardTitle>
         <CardDescription className="text-green-800">Sell your used textbooks to other students.</CardDescription>

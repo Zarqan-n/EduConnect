@@ -53,7 +53,7 @@ export function StudentEnrolledTutors() {
     payFees(paymentDialog.id, {
       onSuccess: () => {
         setPaymentDialog(null);
-        toast({ title: "✅ Payment Successful!", description: `₹${paymentDialog.amount} paid successfully.` });
+        toast({ title: "Payment Successful!", description: `₹${paymentDialog.amount} paid successfully.` });
       },
       onError: (error: any) => {
         toast({ title: "Payment failed", description: error.message || "Failed to process payment.", variant: "destructive" });
