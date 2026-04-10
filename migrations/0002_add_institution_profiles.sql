@@ -5,7 +5,7 @@ ALTER TABLE tutor_profiles
 ADD COLUMN IF NOT EXISTS qualifications text;--> statement-breakpoint
 ALTER TABLE tutor_profiles
 ADD COLUMN IF NOT EXISTS languages text[];--> statement-breakpoint
-CREATE TABLE "institution_profiles" (
+CREATE TABLE IF NOT EXISTS "institution_profiles" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"institution_name" text NOT NULL,

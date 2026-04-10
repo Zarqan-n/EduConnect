@@ -1,7 +1,7 @@
-CREATE TYPE "public"."application_status" AS ENUM('pending', 'accepted', 'rejected');--> statement-breakpoint
-CREATE TYPE "public"."book_condition" AS ENUM('new', 'like_new', 'good', 'fair', 'poor');--> statement-breakpoint
-CREATE TYPE "public"."job_status" AS ENUM('open', 'closed');--> statement-breakpoint
-CREATE TYPE "public"."role" AS ENUM('student', 'teacher', 'institution', 'seller', 'admin');--> statement-breakpoint
+CREATE TYPE IF NOT EXISTS "public"."application_status" AS ENUM('pending', 'accepted', 'rejected');--> statement-breakpoint
+CREATE TYPE IF NOT EXISTS "public"."book_condition" AS ENUM('new', 'like_new', 'good', 'fair', 'poor');--> statement-breakpoint
+CREATE TYPE IF NOT EXISTS "public"."job_status" AS ENUM('open', 'closed');--> statement-breakpoint
+CREATE TYPE IF NOT EXISTS "public"."role" AS ENUM('student', 'teacher', 'institution', 'seller', 'admin');--> statement-breakpoint
 CREATE TABLE "applications" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"job_id" integer NOT NULL,
