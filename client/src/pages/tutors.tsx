@@ -213,7 +213,7 @@ function TuitionCard({ tuition }: { tuition: any }) {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="flex items-center gap-2 text-xs bg-indigo-50 p-2 rounded-lg border border-indigo-100">
                 <Clock className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
                 <div>

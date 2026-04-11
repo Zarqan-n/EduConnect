@@ -294,7 +294,7 @@ function SellerActions({ onSubmitSuccess }: { onSubmitSuccess?: () => void }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-green-900 font-semibold">Book Title</Label>
               <Input {...form.register("title")} placeholder="Calculus 101" className="focus-glow border-green-200" />
@@ -304,7 +304,7 @@ function SellerActions({ onSubmitSuccess }: { onSubmitSuccess?: () => void }) {
               <Input {...form.register("price", { valueAsNumber: true })} type="number" className="focus-glow border-green-200" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-green-900 font-semibold">Subject</Label>
               <Input {...form.register("subject")} placeholder="Mathematics" className="focus-glow border-green-200" />

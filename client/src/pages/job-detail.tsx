@@ -161,7 +161,7 @@ export default function JobDetailPage() {
                   <p className="text-muted-foreground">{job.qualification || "Not specified"}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <h3 className="font-semibold text-sm text-orange-900 mb-2 flex items-center gap-2">
                       <DollarSign className="w-4 h-4" /> Salary Range
@@ -176,7 +176,7 @@ export default function JobDetailPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <h3 className="font-semibold text-sm text-orange-900 mb-2 flex items-center gap-2">
                       <Target className="w-4 h-4" /> Experience Required
@@ -195,7 +195,7 @@ export default function JobDetailPage() {
                 {(job.workingTimeStart || job.workingTimeEnd || job.workingDays) && (
                   <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                     <h3 className="font-semibold text-orange-900 mb-3">Working Hours & Schedule</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {(job.workingTimeStart || job.workingTimeEnd) && (
                         <div>
                           <h4 className="text-sm font-medium text-orange-900 mb-1 flex items-center gap-1"><Clock className="w-4 h-4" /> Working Hours</h4>

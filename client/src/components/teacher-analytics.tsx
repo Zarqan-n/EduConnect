@@ -137,7 +137,7 @@ export function TeacherAnalyticsDashboard() {
 
       {/* Tabs Section */}
       <Tabs defaultValue="analytics" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="post-tuition">Post a Tuition</TabsTrigger>
         </TabsList>
@@ -293,27 +293,7 @@ function PostTuitionForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-teal-900 font-semibold">Subject <span className="text-red-500">*</span></Label>
-              <Input
-                value={form.subject}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                placeholder="Mathematics"
-                className="focus-glow border-teal-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-teal-900 font-semibold">Class Level <span className="text-red-500">*</span></Label>
-              <Input
-                value={form.classLevel}
-                onChange={(e) => setForm({ ...form, classLevel: e.target.value })}
-                placeholder="Class 10"
-                className="focus-glow border-teal-200"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label className="text-teal-900 font-semibold">Timing <span className="text-red-500">*</span></Label>
               <Input

@@ -196,7 +196,7 @@ function InstitutionActions() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="manage-teachers" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-orange-100">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 bg-orange-100">
             <TabsTrigger value="manage-teachers" className="text-orange-900">Manage Teachers</TabsTrigger>
             <TabsTrigger value="post-vacancy" className="text-orange-900">Post Vacancy</TabsTrigger>
           </TabsList>
@@ -213,7 +213,7 @@ function InstitutionActions() {
           {/* Post Vacancy Tab */}
           <TabsContent value="post-vacancy" className="space-y-4 mt-4">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-orange-900 font-semibold">Job Title <span className="text-red-500">*</span></Label>
                   <Input {...form.register("title")} placeholder="Math Teacher" className="focus-glow border-orange-200" />
@@ -225,7 +225,7 @@ function InstitutionActions() {
                   {form.formState.errors.subject && <p className="text-red-500 text-sm">{form.formState.errors.subject.message}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-orange-900 font-semibold">Salary Range <span className="text-red-500">*</span></Label>
                   <Input {...form.register("salaryRange")} placeholder="₹20k - ₹50k" className="focus-glow border-orange-200" />
@@ -242,7 +242,7 @@ function InstitutionActions() {
                 <Input {...form.register("location")} placeholder="New Delhi" className="focus-glow border-orange-200" />
                 {form.formState.errors.location && <p className="text-red-500 text-sm">{form.formState.errors.location.message}</p>}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-orange-900 font-semibold">Working Time Start <span className="text-red-500">*</span></Label>
                   <select {...form.register("workingTimeStart")} className="w-full p-2 rounded-md border border-orange-200 focus-glow">

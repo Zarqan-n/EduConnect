@@ -248,11 +248,11 @@ export default function ProfilePage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            {/* <TabsTrigger value="overview">Overview</TabsTrigger> */}
             <TabsTrigger value="content">My Content</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="danger">Account</TabsTrigger>
           </TabsList>
 
@@ -264,7 +264,7 @@ export default function ProfilePage() {
                 <CardDescription>View your current profile details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-600">Name</label>
                     <p className="text-lg font-semibold">{user.name}</p>
@@ -305,7 +305,7 @@ export default function ProfilePage() {
                       Teaching Profile
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-4">
+                  <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {tutorProfile.mode && (
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-600">Teaching Mode</label>
@@ -535,7 +535,7 @@ export default function ProfilePage() {
                 <CardContent className="space-y-4">
                   {loadingTutorProfile ? (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Skeleton className="h-10 rounded-lg" />
                         <Skeleton className="h-10 rounded-lg" />
                         <Skeleton className="h-10 rounded-lg" />
@@ -956,7 +956,7 @@ export default function ProfilePage() {
                                     </DialogHeader>
                                     {editingTuition && (
                                       <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                           <div className="space-y-1">
                                             <label className="text-sm font-medium">Subject</label>
                                             <Input value={editingTuition.subject} onChange={(e) => setEditingTuition({ ...editingTuition, subject: e.target.value })} />
@@ -966,7 +966,7 @@ export default function ProfilePage() {
                                             <Input value={editingTuition.classLevel} onChange={(e) => setEditingTuition({ ...editingTuition, classLevel: e.target.value })} />
                                           </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                           <div className="space-y-1">
                                             <label className="text-sm font-medium">Timing</label>
                                             <Input value={editingTuition.timing} onChange={(e) => setEditingTuition({ ...editingTuition, timing: e.target.value })} />

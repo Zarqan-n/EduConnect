@@ -95,7 +95,7 @@ export function LocationSearch({ onLocationSelect, loading }: LocationSearchProp
   };
 
   return (
-    <div className="w-full space-y-2 relative">
+    <div className="w-full space-y-2">
       <div className="flex gap-2 relative z-20">
         <div className="flex-1 relative">
           <Input

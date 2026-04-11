@@ -62,7 +62,7 @@ export function FilterPanel({ filters, onFilterChange }: FilterPanelProps) {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-2">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-5">
         <div className="min-w-0">
           <Label htmlFor="subject" className="text-sm font-medium">
             Subject
