@@ -295,6 +295,24 @@ function PostTuitionForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
+              <Label className="text-teal-900 font-semibold">Subject <span className="text-red-500">*</span></Label>
+              <Input
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                placeholder="Mathematics, Physics, English"
+                className="focus-glow border-teal-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-teal-900 font-semibold">Class Level <span className="text-red-500">*</span></Label>
+              <Input
+                value={form.classLevel}
+                onChange={(e) => setForm({ ...form, classLevel: e.target.value })}
+                placeholder="Grade 10, Class 12, College"
+                className="focus-glow border-teal-200"
+              />
+            </div>
+            <div className="space-y-2">
               <Label className="text-teal-900 font-semibold">Timing <span className="text-red-500">*</span></Label>
               <Input
                 value={form.timing}
@@ -303,6 +321,8 @@ function PostTuitionForm() {
                 className="focus-glow border-teal-200"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label className="text-teal-900 font-semibold">Monthly Fee (₹) <span className="text-red-500">*</span></Label>
               <Input
